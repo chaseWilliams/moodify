@@ -4,6 +4,7 @@ import requests as http
 import pprint
 import matplotlib.pyplot as plt
 import pandas as pd
+import csv
 
 """ Spotify is a class that effectively abstracts the HTTP requests to the Spotify API
 
@@ -29,13 +30,25 @@ class Spotify:
     def get_artists(self):
         return None
 
-    # returns a list of the artists' songs
+    # returns a panda.DataFrame of the artists' songs
     def get_songs(self):
-        return None
+        arr = []
+        for sample in user.songs:
+            arr.append([sample, user.songs[sample]])
+        df = pd.DataFrame(arr)
+        return df
 
     # returns all of the user's songs' attributes in an panda dataframe
     def get_song_metadata(self):
         return None
+
+    # only handles songs right now, needs to handle artists and song metadata as well
+    def to_csv(self):
+        with open('data.csv', 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=',')
+            writer.writerow(['track_name', 'track_id'])
+            for index, row in self.get_songs().iterrows():
+                writer.writerow(row.tolist())
 
     # handles all outgoing http requests
     def _get(self, endpoint):
@@ -59,14 +72,9 @@ class Spotify:
                 self._push_to_library(track['track'])
 
     def _push_to_library(self, track_object):
-        self.songs[track_object['name']] = track_object['name']
+        self.songs[track_object['name']] = track_object['id']
         for artist in track_object['artists']:
-
             self.artists[artist['name']] = artist['id']
 
-user = Spotify('BQDFKh0VE-IU-0eZtj9M485cIXvaFTVrYp-AIB5KLsqkwukvOczG2ITf4k0uDCetEFbmbq4-jWFtDCkjZrQZS6aHvSsw6g-I4kT4a19ICTXZNE3d9fNQvWvE8jtSU4mQyZFTeRMagbeqIdG_c8I')
-keys = user.songs.keys
-arr = []
-for sample in user.songs:
-    arr.push(sample)
-print(arr)
+
+user = Spotify('BQB6iyAQUqZRoV9577SKQxLV6zRXhDnTS_mQauIu6xhDuegjLuEqV6Z4Qw10uEpboulyV8H06xAPZhiq9B6z-JtnA-Z_1odFQnXQBSLPcGTtkYh-89lo1EU_tTOzLlBopq5yUUjzv-bItMiLmwm-li4OZaBSSprr')
