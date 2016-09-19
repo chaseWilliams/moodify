@@ -10,6 +10,12 @@ import csv
 
 An individual Spotify object that can act as a direct representation of a user's Spotify
 
+Song metadata includes:
+ - danceability
+ - energy
+ - acousticness
+ - valence
+ - key
 """
 
 class Spotify:
@@ -23,6 +29,7 @@ class Spotify:
         self.songs = {}
         self.artists = {}
         self.song_metadata = np.ndarray([])
+        self.total_tracks = 0
         self._build_library()
 
     # returns a panda.DataFrame of all present genres in user's library
@@ -43,7 +50,7 @@ class Spotify:
 
     # returns all of the user's songs' attributes in an panda.DataFrame
     def get_song_metadata(self):
-        return None
+        self._metadata()
 
     # only handles songs right now, needs to handle artists and song metadata as well
     def to_csv(self):
@@ -75,6 +82,7 @@ class Spotify:
         response = self._get(self.api_library_tracks + '?limit=1')
         response = response.json()
         total_tracks = response['total']
+        self.total_tracks = total_tracks
 
         # go ahead and add first song
         self._push_to_library(response['items'][0]['track'])
@@ -94,8 +102,19 @@ class Spotify:
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
     def _metadata(self):
-        return None
+        for offset in list(range(0, self.total_tracks, 100)):
+            string = ''
+            for index in list(range(offset, offset + 100, 1)):
+                string += self.songs[index][1]
+            result = self._get(self.api_track_metadata + '?ids=' + string)
+            print(result)
 
 
 
-user = Spotify('BQB6iyAQUqZRoV9577SKQxLV6zRXhDnTS_mQauIu6xhDuegjLuEqV6Z4Qw10uEpboulyV8H06xAPZhiq9B6z-JtnA-Z_1odFQnXQBSLPcGTtkYh-89lo1EU_tTOzLlBopq5yUUjzv-bItMiLmwm-li4OZaBSSprr')
+
+
+
+
+
+user = Spotify('BQCuwCBOoQhzDorYGSio7QcEAW8oJyHVLP-MiApJnQhviRVMyGSsRn9ra5XavHmHSKLmQtolojijJD7uFhK8crxw1ls1dkfs_A_13jLS3hnlAq0k6tY-zD390S4qxlEcdXnuonthDDKldG3c5B66iQx-4QBoz2q3')
+user.get_song_metadata()
