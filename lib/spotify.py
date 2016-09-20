@@ -46,11 +46,15 @@ class Spotify:
         for sample in user.songs:
             arr.append([sample, user.songs[sample]])
         df = pd.DataFrame(arr)
+        df.columns = ['track_name', 'track_id']
         return df
 
     # returns all of the user's songs' attributes in an panda.DataFrame
     def get_song_metadata(self):
-        self._metadata()
+        array = self._metadata()
+        df = pd.DataFrame(array)
+        df.columns = ['Danceability', 'Energy', 'Acousticness', 'Valence', 'Key']
+        return df
 
     # only handles songs right now, needs to handle artists and song metadata as well
     def to_csv(self):
@@ -82,7 +86,6 @@ class Spotify:
         response = self._get(self.api_library_tracks + '?limit=1')
         response = response.json()
         total_tracks = response['total']
-        self.total_tracks = total_tracks
 
         # go ahead and add first song
         self._push_to_library(response['items'][0]['track'])
@@ -93,6 +96,7 @@ class Spotify:
             batch_json = batch.json()
             for track in batch_json['items']:
                 self._push_to_library(track['track'])
+        self.total_tracks = len(self.songs)
 
     def _push_to_library(self, track_object):
         self.songs[track_object['name']] = track_object['id']
@@ -102,19 +106,26 @@ class Spotify:
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
     def _metadata(self):
+        arr = []
         for offset in list(range(0, self.total_tracks, 100)):
             string = ''
-            for index in list(range(offset, offset + 100, 1)):
-                string += self.songs[index][1]
+            keys = list(user.songs.keys())
+            if offset + 100 > self.total_tracks:
+                limit = offset + self.total_tracks - offset
+            else:
+                limit = offset + 100
+            for index in list(range(offset, limit, 1)):
+                name = keys[index]
+                string += user.songs[name] + ','
+            string = string.rstrip(',')
             result = self._get(self.api_track_metadata + '?ids=' + string)
-            print(result)
-
-
-
-
-
-
-
-
-user = Spotify('BQCuwCBOoQhzDorYGSio7QcEAW8oJyHVLP-MiApJnQhviRVMyGSsRn9ra5XavHmHSKLmQtolojijJD7uFhK8crxw1ls1dkfs_A_13jLS3hnlAq0k6tY-zD390S4qxlEcdXnuonthDDKldG3c5B66iQx-4QBoz2q3')
-user.get_song_metadata()
+            result = result.json()['audio_features']
+            for track in result:
+                arr.append([
+                    track['danceability'],
+                    track['energy'],
+                    track['acousticness'],
+                    track['valence'],
+                    track['key']
+                ])
+        return np.asarray(arr)
