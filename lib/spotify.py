@@ -109,14 +109,14 @@ class Spotify:
         arr = []
         for offset in list(range(0, self.total_tracks, 100)):
             string = ''
-            keys = list(user.songs.keys())
+            keys = list(self.songs.keys())
             if offset + 100 > self.total_tracks:
                 limit = offset + self.total_tracks - offset
             else:
                 limit = offset + 100
             for index in list(range(offset, limit, 1)):
                 name = keys[index]
-                string += user.songs[name] + ','
+                string += self.songs[name] + ','
             string = string.rstrip(',')
             result = self._get(self.api_track_metadata + '?ids=' + string)
             result = result.json()['audio_features']
