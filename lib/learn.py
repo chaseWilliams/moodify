@@ -10,9 +10,20 @@ Randomly pull together
 """
 
 df = pd.read_csv('./data.csv')
-X = df.iloc[:,1].values
+# grab the song metadata from the csv
+X = df.iloc[:, 2:7].values
 gmm = GMM(n_components=8, covariance_type='full')
 X = X.astype(np.float)
 gmm.fit(X)
-for index, sample in df.iterrows():
-    print(gmm.predict(sample))
+# the per_component probability
+responsibilities = gmm.score_samples(X)[1]
+# predicted class label
+labels = gmm.predict(X)
+labeled_array = []
+it = np.nditer(labels, flags=['f_index'])
+while not it.finished:
+    labeled_array.append([df.iloc[it.index, 0], it[0]])
+    it.iternext()
+label_df = pd.DataFrame(labeled_array)
+label_df.columns = ['track_name', 'cluster_group']
+print(label_df)
