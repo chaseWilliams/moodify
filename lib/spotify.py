@@ -58,11 +58,25 @@ class Spotify:
 
     # only handles songs right now, needs to handle artists and song metadata as well
     def to_csv(self):
+        arr = []
+        #for song_tuple, song_metadata_tuple in zip(self.get_songs().iterrows(), self.get_song_metadata().iterrows()):
+        for index, row in self.get_songs().iterrows():
+            #writer.writerow(row.tolist())
+            #row = [
+            #    song_tuple[1]['track_name'],
+            #    song_tuple[1]['track_id'],
+            #]
+            #for value in song_metadata_tuple[1:5]:
+            #    print(value)
+            arr.append(row)
+            #print(song_tuple[1]['track_id'])
+        arr = np.asarray(arr)
+        result = np.hstack((arr, self.get_song_metadata().values))
         with open('data.csv', 'w', newline='') as file:
             writer = csv.writer(file, delimiter=',')
-            writer.writerow(['track_name', 'track_id'])
-            for index, row in self.get_songs().iterrows():
-                writer.writerow(row.tolist())
+            writer.writerow(['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Key'])
+            for row in result:
+                writer.writerow(row)
 
     # builds the playlists for the user to check out
     def build_playlists(self):
@@ -129,3 +143,6 @@ class Spotify:
                     track['key']
                 ])
         return np.asarray(arr)
+
+user = Spotify('BQBYtmCCK0QCxLUjmDDrAu2yfhySiq4ddTKIpXDXDmtkUYM3FbqVk1124cbpYfPCejDDzzbRTNgOnDwS8IOYyX1BBg8-cAkk_qBcfI1p5ZvTHRn0GlD-CjNPsdPLYShHIXC5DJIn_SWPPK7g-SFaE6Auh-WYM0Or')
+user.to_csv()
