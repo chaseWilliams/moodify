@@ -26,4 +26,7 @@ while not it.finished:
     it.iternext()
 label_df = pd.DataFrame(labeled_array)
 label_df.columns = ['track_name', 'cluster_group']
-print(label_df)
+values = label_df.values
+df = pd.concat([df, label_df.iloc[:,1]], axis=1)
+# try to find where
+# print(df[df.iloc])
