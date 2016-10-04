@@ -32,6 +32,7 @@ class Spotify:
         self.total_tracks = 0
         self._build_library()
 
+
     # returns a panda.DataFrame of all present genres in user's library
     def get_genres(self):
         return None
@@ -144,5 +145,5 @@ class Spotify:
                 ])
         return np.asarray(arr)
 
-user = Spotify('BQBYtmCCK0QCxLUjmDDrAu2yfhySiq4ddTKIpXDXDmtkUYM3FbqVk1124cbpYfPCejDDzzbRTNgOnDwS8IOYyX1BBg8-cAkk_qBcfI1p5ZvTHRn0GlD-CjNPsdPLYShHIXC5DJIn_SWPPK7g-SFaE6Auh-WYM0Or')
-user.to_csv()
+#user = Spotify('BQBYtmCCK0QCxLUjmDDrAu2yfhySiq4ddTKIpXDXDmtkUYM3FbqVk1124cbpYfPCejDDzzbRTNgOnDwS8IOYyX1BBg8-cAkk_qBcfI1p5ZvTHRn0GlD-CjNPsdPLYShHIXC5DJIn_SWPPK7g-SFaE6Auh-WYM0Or')
+#user.to_csv()

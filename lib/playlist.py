@@ -6,9 +6,10 @@ class Playlist:
 
     # songs is a pandas.DataFrame of all the songs
     # track_name, track_id, and all metadata minus cluster label
-    def __init__(self, songs):
-        self.songs = songs
-        self.total_songs = len(songs.index)
+    def __init__(self, clustered_songs):
+        self.songs = clustered_songs
+        self.total_songs = len(clustered_songs.index)
+        self.playlists = self.separate()
         self._substantiate()
 
     # returns a portion_number-length list of songs for the playlist
