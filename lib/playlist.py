@@ -1,16 +1,17 @@
 import pandas as pd
 import numpy as np
 import random
+import pprint
 
 class Playlist:
 
     # songs is a pandas.DataFrame of all the songs
     # track_name, track_id, and all metadata minus cluster label
-    def __init__(self, clustered_songs):
+    def __init__(self, clustered_songs, num_playlists):
         self.songs = clustered_songs
-        self.total_songs = len(clustered_songs.index)
-        self.playlists = self.separate()
-        self._substantiate()
+        #self.total_songs =
+        self.playlists = self._separate(num_playlists)
+        #self._substantiate()
 
     # returns a portion_number-length list of songs for the playlist
     # as to represent the entire playlist
@@ -25,6 +26,18 @@ class Playlist:
     # - Track demo listen
     def _substantiate(self):
         return None
+
+    # separate the songs according to their songs
+    def _separate(self, length):
+        arr = [[]] * length
+        print(arr)
+        for song in self.songs.iterrows():
+            song = song[1].to_dict()
+            id = song['cluster_id']
+            arr[id].append(song)
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(arr[3][0:5])
+        return arr
 
     # returns a random song
     def _random_song(self):

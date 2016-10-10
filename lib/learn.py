@@ -1,11 +1,13 @@
-
+from sklearn.mixture import GMM
+import numpy as np
+import pandas as pd
 """
 Take the pandas.DataFrame and cluster the data with GMM
 """
 def agglomerate_data(df, components):
     # grab the song metadata from the csv
-    X = df.iloc[:, 2:6].values
-    gmm = GMM(n_components=components, covariance_type='full')
+    X = df.iloc[:, 2:4].values
+    gmm = GMM(n_components=components, covariance_type='diagonal')
     X = X.astype(np.float)
     gmm.fit(X)
     # the per_component probability
@@ -19,14 +21,14 @@ def agglomerate_data(df, components):
     #    it.iternext()
     for index, value in np.ndenumerate(labels):
         row = []
-        for elem in df.iloc[index, 0:6].values.tolist()[0]:
+        for elem in df.iloc[index, 0:4].values.tolist()[0]:
             row.append(elem)
         row.append(value)
         labeled_array.append(row)
 
     label_df = pd.DataFrame(labeled_array)
-    label_df.columns = ['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'cluster_id']
-    print(label_df.tail())
+    print(label_df)
+    label_df.columns = ['track_name', 'track_id', 'Danceability', 'Energy', 'cluster_id']
     return label_df
 
 #df = pd.read_csv('./data.csv')
