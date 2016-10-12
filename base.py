@@ -10,8 +10,9 @@ from lib.spotify import Spotify
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
 
-df = agglomerate_data(pd.read_csv('./lib/data.csv'), 20)
-playlist = Playlist(df, 20)
+df = agglomerate_data(pd.read_csv('./lib/data.csv'), 15)
+playlist = Playlist(df, 15)
 
 for dictionary in playlist.playlists[3]:
     print('| ' + dictionary['track_name'] + ' | ')
+

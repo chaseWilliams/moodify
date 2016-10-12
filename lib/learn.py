@@ -1,13 +1,17 @@
-from sklearn.mixture import GMM
+from sklearn.mixture import BayesianGaussianMixture
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 """
 Take the pandas.DataFrame and cluster the data with GMM
 """
+
 def agglomerate_data(df, components):
     # grab the song metadata from the csv
     X = df.iloc[:, 2:4].values
-    gmm = GMM(n_components=components, covariance_type='diagonal')
+    plt.scatter(X[:,0], X[:,1], color='r', marker='o')
+    plt.savefig('library')
+    gmm = BayesianGaussianMixture(n_init=1,n_components=components, covariance_type='full', weight_concentration_prior=100,mean_precision_prior=.01, weight_concentration_prior_type='dirichlet_distribution', max_iter=1000)
     X = X.astype(np.float)
     gmm.fit(X)
     # the per_component probability
@@ -15,10 +19,14 @@ def agglomerate_data(df, components):
     # predicted class label
     labels = gmm.predict(X)
     labeled_array = []
-    #it = np.nditer(labels)
-    #while not it.finished:
-    #    labeled_array.append([df.iloc[it.index, 0], it[0]])
-    #    it.iternext()
+    xx, yy = np.meshgrid(np.arange(0, 1, .01), np.arange(0, 1, .01))
+    to_be_plotted = gmm.predict(np.c_[xx.ravel(), yy.ravel()])
+    to_be_plotted = to_be_plotted.reshape(xx.shape)
+    fig, ax = plt.subplots()
+    ax.contourf(xx, yy, to_be_plotted, cmap=plt.cm.Paired)
+    ax.axis('off')
+    plt.savefig('gmm_learn')
+
     for index, value in np.ndenumerate(labels):
         row = []
         for elem in df.iloc[index, 0:4].values.tolist()[0]:
