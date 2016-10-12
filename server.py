@@ -1,5 +1,6 @@
 from flask import Flask, redirect, request
 import requests as http
+import redis as rd
 import json
 import uuid
 import numpy as np
@@ -52,5 +53,5 @@ def authenticate():
 
 
 if __name__ == "__main__":
-    redis = redis.StrictRedis(host='localhost', port=6379, db=0)
+    redis = rd.StrictRedis(host='localhost', port=6379, db=0)
     app.run()

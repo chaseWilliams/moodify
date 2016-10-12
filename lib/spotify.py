@@ -15,7 +15,7 @@ Song metadata includes:
  - energy
  - acousticness
  - valence
- - key
+ - tempo
 """
 
 class Spotify:
@@ -54,7 +54,7 @@ class Spotify:
     def get_song_metadata(self):
         array = self._metadata()
         df = pd.DataFrame(array)
-        df.columns = ['Danceability', 'Energy', 'Acousticness', 'Valence', 'Key']
+        df.columns = ['Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo']
         return df
 
     # only handles songs right now, needs to handle artists and song metadata as well
@@ -66,7 +66,7 @@ class Spotify:
         result = np.hstack((arr, self.get_song_metadata().values))
         with open('data.csv', 'w', newline='') as file:
             writer = csv.writer(file, delimiter=',')
-            writer.writerow(['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Key'])
+            writer.writerow(['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo'])
             for row in result:
                 writer.writerow(row)
 
@@ -120,9 +120,10 @@ class Spotify:
                     track['energy'],
                     track['acousticness'],
                     track['valence'],
-                    track['key']
+                    track['tempo']
                 ])
         return np.asarray(arr)
 
-#user = Spotify('BQBYtmCCK0QCxLUjmDDrAu2yfhySiq4ddTKIpXDXDmtkUYM3FbqVk1124cbpYfPCejDDzzbRTNgOnDwS8IOYyX1BBg8-cAkk_qBcfI1p5ZvTHRn0GlD-CjNPsdPLYShHIXC5DJIn_SWPPK7g-SFaE6Auh-WYM0Or')
+user = Spotify('BQBQBPDvbefJzziD22bFEy3ioOnwyNT7KVmBCjkVXvepbpfXbehqyFcZyZE5DUOr5lq-8gpEwynlzlTwgAe2s5woLXSxmzostB6O7FQ9F4aFD2K4qFXOPQYbBsRah8dLYDZimr3FLzlmSZ8NGqlF_mIqXi3n9FD6')
 #user.to_csv()
+print(user.get_song_metadata())
