@@ -40,7 +40,6 @@ def agglomerate_data(df, components):
         labeled_array.append(row)
 
     label_df = pd.DataFrame(labeled_array)
-    print(label_df)
     label_df.columns = ['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo', 'cluster_id']
     return label_df
 

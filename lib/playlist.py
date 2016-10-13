@@ -29,14 +29,15 @@ class Playlist:
 
     # separate the songs according to their songs
     def _separate(self, length):
-        arr = [[]] * length
-        print(arr)
-        for song in self.songs.iterrows():
-            song = song[1].to_dict()
-            id = song['cluster_id']
-            arr[id].append(song)
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(arr[3][0:5])
+        arr = []
+        for id in range(0, length):
+            sub_arr = []
+            for song in self.songs.iterrows():
+                song = song[1].to_dict()
+                song_id = song['cluster_id']
+                if song_id == id:
+                    sub_arr.append(song)
+            arr.append(sub_arr)
         return arr
 
     # returns a random song

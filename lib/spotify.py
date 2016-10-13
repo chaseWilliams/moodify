@@ -23,6 +23,7 @@ class Spotify:
     api_library_tracks = api_base + '/me/tracks' # only returns 50 songs at a time
     api_artists = api_base + '/artists'
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
+    api_me = api_base + '/me'
 
     def __init__(self, token):
         self.token = token
@@ -31,6 +32,10 @@ class Spotify:
         self.song_metadata = np.ndarray([])
         self.total_tracks = 0
         self._build_library()
+        # url is user specific
+        uid = self._get_user_id()
+        print(uid)
+        self.api_create_playlist = self.api_base + '/users/' + uid + '/playlists'
 
 
     # returns a panda.DataFrame of all present genres in user's library
@@ -57,6 +62,24 @@ class Spotify:
         df.columns = ['Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo']
         return df
 
+    # saves the specified playlist
+    def save_playlist(self, playlist):
+        data = {
+            'name': 'test!'
+        }
+        response = self._post(self.api_create_playlist, data).json()
+        playlist_id = response['items'][0]['id']
+        playlist_uri = self.api_create_playlist + '/' + playlist_id + '/tracks'
+        uris = []
+        for song in playlist:
+            uris.append('spotify:track:' + song['track_id'])
+        dictionary = {'uris': uris}
+        result = self._post(playlist_uri, dictionary)
+        print(result)
+        result = result.json()
+        print(result['href'])
+
+
     # only handles songs right now, needs to handle artists and song metadata as well
     def to_csv(self):
         arr = []
@@ -72,8 +95,19 @@ class Spotify:
 
     # handles all outgoing http requests
     def _get(self, endpoint):
+        print(endpoint)
         request = http.get(endpoint, headers={'Authorization': 'Bearer ' + self.token})
         return request
+
+    def _post(self, endpoint, data):
+        print(endpoint)
+        request = http.get(endpoint, data=data, headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
+        return request
+
+    def _get_user_id(self):
+        response = self._get(self.api_me).json()['id']
+        print(response)
+        return response
 
     def _build_library(self):
         # get the first track object to determine total number of tracks in library
