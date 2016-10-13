@@ -124,6 +124,6 @@ class Spotify:
                 ])
         return np.asarray(arr)
 
-user = Spotify('BQBQBPDvbefJzziD22bFEy3ioOnwyNT7KVmBCjkVXvepbpfXbehqyFcZyZE5DUOr5lq-8gpEwynlzlTwgAe2s5woLXSxmzostB6O7FQ9F4aFD2K4qFXOPQYbBsRah8dLYDZimr3FLzlmSZ8NGqlF_mIqXi3n9FD6')
+#user = Spotify('BQCPgPFZ6X0zydhljGcGZhXHUffhxONoNNJvRq81BK78kMgc8sA2FKm2o_qwpnNPRvgjsCzYbjbI0-brjuiHr0AW3-3yuKCe4Jq-2JDKb_P6SOEbyECmCxUQQIhlEUcTtME7BreUBZIiGdE0iO0_Hl5Baw4DK9qS')
 #user.to_csv()
-print(user.get_song_metadata())
+#print(user.get_song_metadata())
