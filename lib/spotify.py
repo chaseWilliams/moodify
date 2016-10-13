@@ -5,6 +5,7 @@ import pprint
 import matplotlib.pyplot as plt
 import pandas as pd
 import csv
+import json
 
 """ Spotify is a class that effectively abstracts the HTTP requests to the Spotify API
 
@@ -65,11 +66,14 @@ class Spotify:
     # saves the specified playlist
     def save_playlist(self, playlist):
         data = {
-            'name': 'test!'
+            'name': 'moodify playlist'
         }
-        response = self._post(self.api_create_playlist, data).json()
-        playlist_id = response['items'][0]['id']
-        playlist_uri = self.api_create_playlist + '/' + playlist_id + '/tracks'
+        response = self._post(self.api_create_playlist, data)
+        response = response.json()
+        pp = pprint.PrettyPrinter(indent=2)
+        pp.pprint(response)
+        #playlist_id = response['items'][0]['id']
+        playlist_uri = response['href'] + '/tracks'
         uris = []
         for song in playlist:
             uris.append('spotify:track:' + song['track_id'])
@@ -77,7 +81,7 @@ class Spotify:
         result = self._post(playlist_uri, dictionary)
         print(result)
         result = result.json()
-        print(result['href'])
+        print(result)
 
 
     # only handles songs right now, needs to handle artists and song metadata as well
@@ -101,7 +105,7 @@ class Spotify:
 
     def _post(self, endpoint, data):
         print(endpoint)
-        request = http.get(endpoint, data=data, headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
+        request = http.post(endpoint, data=json.dumps(data), headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
         return request
 
     def _get_user_id(self):

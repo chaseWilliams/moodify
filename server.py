@@ -49,7 +49,7 @@ def retrieve():
 @app.route("/authenticate")
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
-                    '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read,playlist-modify-public')
+                    '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')
 
 
 if __name__ == "__main__":

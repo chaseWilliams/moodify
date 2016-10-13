@@ -19,6 +19,5 @@ playlist = Playlist(df, 15)
     #print(len(songs))
     #print("\n---\n")
 
-user = Spotify('BQAUy-uiBODTHJiMotQ9TYbxCb2NUfNyIgMcYypjeUJdfJIVE5QcnhJppS_J37gKTDi3x1vq-7xxu6bQYw7eOaL_CnhAtYQ3tK2P1DZIgugyc4d459yFS2Bpx0wY5XtlBtePWfjbsRPLOf_TN9li3m_8Cc62t42b')
-print(playlist.playlists[0])
+user = Spotify('BQD4sX7BcTdVlLRu7xPkVn3hrNnOj4U-lDw4NBLoU7QW71pbQZJFNE3YhLnrQao50QB1z7RIZQZiZgOI_sgzItxe2Ko21mCAM9NoYyo-ebOaWBVWwWgLJar6C-dszXwE43XL2eyIeKg18oo2VHopIiPTfDVZjZGjkzlEQr5Obwohfd4-1RTpn2YXUvZ3O0xM1OdJ')
 user.save_playlist(playlist.playlists[0])
