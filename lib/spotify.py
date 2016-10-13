@@ -50,8 +50,8 @@ class Spotify:
     # returns a panda.DataFrame of the artists' songs
     def get_songs(self):
         arr = []
-        for sample in user.songs:
-            arr.append([sample, user.songs[sample]])
+        for sample in self.songs:
+            arr.append([sample, self.songs[sample]])
         df = pd.DataFrame(arr)
         df.columns = ['track_name', 'track_id']
         return df
@@ -64,9 +64,9 @@ class Spotify:
         return df
 
     # saves the specified playlist
-    def save_playlist(self, playlist):
+    def save_playlist(self, playlist, name):
         data = {
-            'name': 'moodify playlist'
+            'name': name
         }
         response = self._post(self.api_create_playlist, data)
         response = response.json()
@@ -99,12 +99,10 @@ class Spotify:
 
     # handles all outgoing http requests
     def _get(self, endpoint):
-        print(endpoint)
         request = http.get(endpoint, headers={'Authorization': 'Bearer ' + self.token})
         return request
 
     def _post(self, endpoint, data):
-        print(endpoint)
         request = http.post(endpoint, data=json.dumps(data), headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
         return request
 

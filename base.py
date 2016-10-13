@@ -10,7 +10,9 @@ from lib.spotify import Spotify
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
 
-df = agglomerate_data(pd.read_csv('./lib/data.csv'), 15)
+user = Spotify('BQDt9jV8I3k1-5rIRzpKZgPcqQ2Cv4ZOt4mNz4_yfLZphti7u9TcCEC1OtNSSWy4YRctO3cPBTgT2AELd8O3AZ9ufNdWqcrZmE6e5IJC-7wuiOpqXpSNyCa4Fu3cjjyRe53wIhrmYIqz-Iyuua7Jiz8QtCkNUsK0JANbWNLVDTDuV1OVfb_I0zqVG4cLejc')
+user.to_csv()
+df = agglomerate_data(pd.read_csv('./data.csv'), 15)
 playlist = Playlist(df, 15)
 
 #for songs in playlist.playlists:
@@ -19,5 +21,6 @@ playlist = Playlist(df, 15)
     #print(len(songs))
     #print("\n---\n")
 
-user = Spotify('BQD4sX7BcTdVlLRu7xPkVn3hrNnOj4U-lDw4NBLoU7QW71pbQZJFNE3YhLnrQao50QB1z7RIZQZiZgOI_sgzItxe2Ko21mCAM9NoYyo-ebOaWBVWwWgLJar6C-dszXwE43XL2eyIeKg18oo2VHopIiPTfDVZjZGjkzlEQr5Obwohfd4-1RTpn2YXUvZ3O0xM1OdJ')
-user.save_playlist(playlist.playlists[0])
+for x in range(0, 15):
+    name = 'Moodify #' + str(x + 1)
+    user.save_playlist(playlist.playlists[x], name)

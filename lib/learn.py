@@ -12,10 +12,16 @@ def agglomerate_data(df, components):
     #X = df.iloc[:, 2:4].values
     #plt.scatter(X[:,0], X[:,1], color='r', marker='o')
     #plt.show()
-
+    np.set_printoptions(threshold=np.inf)
     X = df.iloc[:, 2:-1].values
     gmm = BayesianGaussianMixture(n_init=1,n_components=components, covariance_type='full', weight_concentration_prior=100,mean_precision_prior=.01, weight_concentration_prior_type='dirichlet_distribution', max_iter=1000)
     X = X.astype(np.float)
+    #print(X)
+    #print(np.any(np.isnan(X)))
+    #print(np.all(np.isfinite(X)))
+
+    # only fit the non-NaN values
+    X = X[~np.isnan(X).any(axis=1)]
     gmm.fit(X)
     # the per_component probability
     responsibilities = gmm.score_samples(X)[1]
