@@ -9,8 +9,8 @@ class Playlist:
     # track_name, track_id, and all metadata minus cluster label
     def __init__(self, clustered_songs, num_playlists):
         self.songs = clustered_songs
+        self.length = num_playlists
         #self.total_songs =
-        self.playlists = self._separate(num_playlists)
         #self._substantiate()
 
     # returns a portion_number-length list of songs for the playlist
@@ -28,9 +28,9 @@ class Playlist:
         return None
 
     # separate the songs according to their songs
-    def _separate(self, length):
+    def separate(self):
         arr = []
-        for id in range(0, length):
+        for id in range(0, self.length):
             sub_arr = []
             for song in self.songs.iterrows():
                 song = song[1].to_dict()

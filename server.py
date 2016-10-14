@@ -21,32 +21,43 @@ token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
 redis = None
 
-@app.route("/callback")
+@app.route('/callback')
 def callback():
     code = request.args.get('code')
-    result = http.post(token_uri, data = {
+    response = http.post(token_uri, data = {
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': redirect_uri,
         'client_id': client_id,
         'client_secret': client_secret
     })
-    print('token result')
-    print(result.json())
-    dict = result.json()
-    uid = uuid.uuid4()
-    redis.set(str(uid), dict['access_token'])
-    return "we did it! your token is " + dict['access_token']
+    response = response.json()
+    token = response['access_token']
+    user = Spotify(token)
+    for index, playlist in enumerate(user.playlists):
+        key = user.uid + '-' + str(index)
+        redis.set(key, json.dumps(playlist))
+    string = "we did it! your token is " + token
+    return string + "\n\n" + json.dumps(user.playlists)
 
 @app.route('/retrieve')
 def retrieve():
     uid = request.args.get('uid')
-    token = redis.get(uid)
-    user = Spotify(token)
-    df = agglomerate_data(user.get_songs(), 8)
-    data = Playlist(df)
+    playlists = request.args.get('playlists')
+    print(uid)
+    playlists = playlists.split(',')
+    arr = []
+    for index, playlist in enumerate(playlists):
+        key = uid + '-' + str(index)
+        result = redis.get(key).decode('utf-8')
+        arr.append(json.loads(result))
+    return json.dumps({'status': 'ok', 'contents': arr})
 
-@app.route("/authenticate")
+@app.route('/save')
+def save():
+
+
+@app.route('/authenticate')
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
                     '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')

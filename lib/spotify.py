@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import csv
 import json
+from lib.playlist import Playlist
+from lib.learn import agglomerate_data
 
 """ Spotify is a class that effectively abstracts the HTTP requests to the Spotify API
 
@@ -26,17 +28,21 @@ class Spotify:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, token):
-        self.token = token
-        self.songs = {}
-        self.artists = {}
-        self.song_metadata = np.ndarray([])
-        self.total_tracks = 0
-        self._build_library()
-        # url is user specific
-        uid = self._get_user_id()
-        print(uid)
-        self.api_create_playlist = self.api_base + '/users/' + uid + '/playlists'
+    def __init__(self, token=None):
+        if token is not None:
+            self.token = token
+            self.songs = {}
+            self.artists = {}
+            self.song_metadata = np.ndarray([])
+            self.total_tracks = 0
+            self._build_library()
+            # url is user specific
+            self.uid = self._get_user_id()
+            self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
+            labeled_songs = agglomerate_data(self.to_df(), 15)
+            self.playlists = Playlist(labeled_songs, 15).separate()
+        else:
+            
 
 
     # returns a panda.DataFrame of all present genres in user's library
@@ -52,9 +58,9 @@ class Spotify:
         arr = []
         for sample in self.songs:
             arr.append([sample, self.songs[sample]])
-        df = pd.DataFrame(arr)
-        df.columns = ['track_name', 'track_id']
-        return df
+        arr = np.asarray(arr)
+        result = np.hstack((arr, self.get_song_metadata().values))
+        return result
 
     # returns all of the user's songs' attributes in an panda.DataFrame
     def get_song_metadata(self):
@@ -70,8 +76,8 @@ class Spotify:
         }
         response = self._post(self.api_create_playlist, data)
         response = response.json()
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(response)
+        #pp = pprint.PrettyPrinter(indent=2)
+        #pp.pprint(response)
         #playlist_id = response['items'][0]['id']
         playlist_uri = response['href'] + '/tracks'
         uris = []
@@ -83,14 +89,21 @@ class Spotify:
         result = result.json()
         print(result)
 
+    # returns a panda DataFrame of all song data
+    def to_df(self):
+        arr = self.get_songs()
+        df = pd.DataFrame(arr)
+        df.columns = ['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo']
+        return df
 
     # only handles songs right now, needs to handle artists and song metadata as well
     def to_csv(self):
-        arr = []
-        for index, row in self.get_songs().iterrows():
-            arr.append(row)
-        arr = np.asarray(arr)
-        result = np.hstack((arr, self.get_song_metadata().values))
+        #arr = []
+        #for index, row in self.get_songs().iterrows():
+        #    arr.append(row)
+        #arr = np.asarray(arr)
+        #result = np.hstack((arr, self.get_song_metadata().values))
+        result = self.get_songs()
         with open('data.csv', 'w', newline='') as file:
             writer = csv.writer(file, delimiter=',')
             writer.writerow(['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo'])
@@ -107,9 +120,7 @@ class Spotify:
         return request
 
     def _get_user_id(self):
-        response = self._get(self.api_me).json()['id']
-        print(response)
-        return response
+        return self._get(self.api_me).json()['id']
 
     def _build_library(self):
         # get the first track object to determine total number of tracks in library
