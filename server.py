@@ -37,6 +37,8 @@ def callback():
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
+        name = 'Moodify #' + str(index + 1)
+        user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
     return string + "\n\n" + json.dumps(user.playlists)
 
@@ -53,8 +55,8 @@ def retrieve():
         arr.append(json.loads(result))
     return json.dumps({'status': 'ok', 'contents': arr})
 
-@app.route('/save')
-def save():
+#@app.route('/save')
+#def save():
 
 
 @app.route('/authenticate')

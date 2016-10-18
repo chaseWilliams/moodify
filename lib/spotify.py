@@ -41,7 +41,7 @@ class Spotify:
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
             labeled_songs = agglomerate_data(self.to_df(), 15)
             self.playlists = Playlist(labeled_songs, 15).separate()
-        else:
+        #else:
             
 
 
