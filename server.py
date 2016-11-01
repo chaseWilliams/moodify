@@ -53,7 +53,10 @@ def retrieve():
         key = uid + '-' + str(index)
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
-    return json.dumps({'status': 'ok', 'contents': arr})
+    string = json.dumps({'status': 'ok', 'contents': arr})
+    response = Flask.make_response(string)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 #@app.route('/save')
 #def save():

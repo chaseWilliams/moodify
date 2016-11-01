@@ -2,3 +2,4 @@
 __pycache__/
 packages.py
 dump.rdb
+.ipynb_checkpoints/
