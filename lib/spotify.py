@@ -45,15 +45,16 @@ class Spotify:
             
 
 
-    # returns a panda.DataFrame of all present genres in user's library
+    # returns a python list of all present genres in user's library
     def get_genres(self):
-        return None
+        songs = self.get_songs()
+        print(songs)
 
     # returns a panda.DataFrame of all the artists present in user's library
     def get_artists(self):
         return None
 
-    # returns a panda.DataFrame of the artists' songs
+    # returns a python list of the artists' songs
     def get_songs(self):
         arr = []
         for sample in self.songs:

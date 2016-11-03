@@ -38,7 +38,7 @@ def callback():
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
         name = 'Moodify #' + str(index + 1)
-        user.save_playlist(playlist, name)
+        #user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
     return string + "\n\n" + json.dumps(user.playlists)
 
