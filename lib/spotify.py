@@ -32,7 +32,7 @@ class Spotify:
         if token is not None:
             self.token = token
             self.songs = {}
-            self.artists = {}
+            self.artist_ids = []
             self.song_metadata = np.ndarray([])
             self.total_tracks = 0
             self._build_library()
@@ -47,12 +47,30 @@ class Spotify:
 
     # returns a python list of all present genres in user's library
     def get_genres(self):
-        songs = self.get_songs()
-        print(songs)
+        artist_ids = np.array(self.artist_ids)
+        ceiling = len(artist_ids)
+        all_genres = ''
+        for offset in list(range(0, ceiling, 50)):
+            string = ''
+            if offset + 50 > ceiling:
+                limit = ceiling
+            else:
+                limit = offset + 50
+            for index in list(range(offset, limit, 1)):
+                string += artist_ids[index] + ','
+            string = string.rstrip(',')
+            response = self._get(self.api_artists + '?ids=' + string)
+            response = response.json()
+            for artist in response['artists']:
+                genres = ','.join(artist['genres'])
+                all_genres += genres + ','
+        all_genres = all_genres.rstrip(',')
+        return all_genres
 
-    # returns a panda.DataFrame of all the artists present in user's library
-    def get_artists(self):
-        return None
+
+        #return
+
+        #return get_single_genre(self, artist_ids.tolist()[0][0])
 
     # returns a python list of the artists' songs
     def get_songs(self):
@@ -143,7 +161,7 @@ class Spotify:
     def _push_to_library(self, track_object):
         self.songs[track_object['name']] = track_object['id']
         for artist in track_object['artists']:
-            self.artists[artist['name']] = artist['id']
+            self.artist_ids.append(artist['id'])
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
@@ -171,6 +189,13 @@ class Spotify:
                     track['tempo']
                 ])
         return np.asarray(arr)
+
+    def _get_single_genre(self, id):
+        uri = self.api_artists + '/' + id
+        response = self._get(uri)
+        response = response.json()
+        # return comma-separated str of the genres
+        return ','.join(response['genres'])
 
 #user = Spotify('BQCPgPFZ6X0zydhljGcGZhXHUffhxONoNNJvRq81BK78kMgc8sA2FKm2o_qwpnNPRvgjsCzYbjbI0-brjuiHr0AW3-3yuKCe4Jq-2JDKb_P6SOEbyECmCxUQQIhlEUcTtME7BreUBZIiGdE0iO0_Hl5Baw4DK9qS')
 #user.to_csv()
