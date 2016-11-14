@@ -45,9 +45,9 @@ class Spotify:
             
 
 
-    # returns a python list of all present genres in user's library
-    def get_genres(self):
-        artist_ids = np.array(self.artist_ids)
+    # takes a list of artist ids and returns a comma separated string of all genres (repeats)
+    def get_genres(self, ids):
+        artist_ids = np.array(ids)
         ceiling = len(artist_ids)
         all_genres = ''
         for offset in list(range(0, ceiling, 50)):

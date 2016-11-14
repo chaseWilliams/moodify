@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request
+from flask import Flask, Response, redirect, request, url_for
 import requests as http
 import redis as rd
 import json
@@ -11,8 +11,9 @@ import csv
 from lib.spotify import Spotify
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
+from lib.nocache import nocache
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 client_id = 'c23563670ff943438fdc616383e9f0ea'
 client_secret = '08e420d130d94312a20123663db0ec25'
 redirect_uri = 'http://127.0.0.1:5000/callback'
@@ -21,9 +22,17 @@ token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
 redis = None
 
+def set_no_cache(func):
+    def func_wrapper():
+        resp = func()
+        resp.headers['Cache-Control'] = 'no-cache'
+        return resp
+    return func_wrapper
+
 @app.route('/callback')
+@set_no_cache
 def callback():
-    code = request.args.get('code')
+    """code = request.args.get('code')
     response = http.post(token_uri, data = {
         'grant_type': 'authorization_code',
         'code': code,
@@ -40,7 +49,9 @@ def callback():
         name = 'Moodify #' + str(index + 1)
         #user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
-    return string + "\n\n" + json.dumps(user.playlists)
+    """
+    print('here')
+    return app.send_static_file('callback.html')
 
 @app.route('/retrieve')
 def retrieve():
@@ -54,9 +65,12 @@ def retrieve():
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
     string = json.dumps({'status': 'ok', 'contents': arr})
-    response = Flask.make_response(string)
-    response.headers['Content-Type'] = 'application/json'
-    return response
+
+    @app.after_request
+    def add_header(response):
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    return string
 
 #@app.route('/save')
 #def save():
