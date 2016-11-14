@@ -7,9 +7,11 @@ var app = new Vue({
             console.log('starting')
             response = $.get('/retrieve?uid=bornofawesomeness&playlists=7').then(function(data) {
                 console.log('ay');
-                return data['contents'];
+                data = data['contents']
+                console.log(data)
+                return data[0];
             }.bind(this));
-            console.log(response);
+            console.log('obtained');
             return response;
         }
     }
