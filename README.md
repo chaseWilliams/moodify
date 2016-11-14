@@ -25,7 +25,6 @@ Moodify has the endpoint at `/retrieve` that allows users to hit the Redis datab
         "track_name": "Gold (feat. Yuna)",
         "Acousticness": "0.0319"
       }
-      ...
     ]
   ]
 }
