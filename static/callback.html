@@ -3,15 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title> Moodify </title>
+    <link rel="stylesheet" href="static/app.css" />
+    <link rel="stylesheet" href="static/foundation.min.css" />
 </head>
 <body>
 
 <div id="app">
-     <ul>
-        <li v-for="item in playlists">
-            {{ item.track_name }}
-        </li>
-    </ul>
+    <div class="row">
+        <div class="small-4 columns">
+            <h1> 1 </h1>
+            <ul>
+                <li v-for="item in playlists[0]">
+                    {{ item.track_name }}
+                </li>
+            </ul>
+        </div>
+        <div class="small-4 columns">
+            <h1> 2 </h1>
+            <ul>
+                <li v-for="item in playlists[1]">
+                    {{ item.track_name }}
+                </li>
+            </ul>
+        </div>
+        <div class="small-4 columns">
+            <h1> 3 </h1>
+            <ul>
+                <li v-for="item in playlists[3]">
+                    {{ item.track_name }}
+                </li>
+            </ul>
+        </div>
+    </div>
+
     <p> L i T</p>
 </div>
 <script src="/static/vue.js"></script>
@@ -19,6 +43,7 @@
   src="https://code.jquery.com/jquery-3.1.1.min.js"
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
+<script src="/static/foundation.min.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

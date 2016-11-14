@@ -21,15 +21,7 @@ token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
 redis = None
 
-def set_no_cache(func):
-    def func_wrapper():
-        resp = func()
-        resp.headers['Cache-Control'] = 'no-cache'
-        return resp
-    return func_wrapper
-
 @app.route('/callback')
-@set_no_cache
 def callback():
     code = request.args.get('code')
     response = http.post(token_uri, data = {
@@ -46,7 +38,7 @@ def callback():
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
         name = 'Moodify #' + str(index + 1)
-        #user.save_playlist(playlist, name)
+        user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
     print('here')
     return Response(string)
@@ -72,29 +64,31 @@ def retrieve():
 
 @app.route('/test')
 def test():
-    @after_this_request
+    """@after_this_request
     def add_header(response):
         response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        print('setting_headers')
         return response
+        """
     return app.send_static_file('callback.html')
+
+@app.route('/begin')
+def begin():
+    return app.send_static_file('index.html')
 
 @app.route('/authenticate')
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
                     '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')
-
+"""
 @app.after_request
 def add_header(r):
-    """
     Add headers to both force latest IE rendering engine or Chrome Frame,
     and also to cache the rendered page for 10 minutes.
-    """
-    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
-
+"""
 if __name__ == "__main__":
     redis = rd.StrictRedis(host='localhost', port=6379, db=0)
     app.run()
