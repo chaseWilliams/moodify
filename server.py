@@ -80,15 +80,14 @@ def begin():
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
                     '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')
-"""
+
 @app.after_request
 def add_header(r):
-    Add headers to both force latest IE rendering engine or Chrome Frame,
-    and also to cache the rendered page for 10 minutes.
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     r.headers["Pragma"] = "no-cache"
-    r.headers['Cache-Control'] = 'public, max-age=0'
+    r.headers["Expires"] = "0"
     return r
-"""
+
 if __name__ == "__main__":
     redis = rd.StrictRedis(host='localhost', port=6379, db=0)
     app.run()

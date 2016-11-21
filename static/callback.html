@@ -12,16 +12,18 @@
     <div class="row">
         <div class="small-4 columns">
             <h1> 1 </h1>
-            <ul>
-                <li v-for="item in playlists[0]">
-                    {{ item.track_name }}
-                </li>
-            </ul>
+            <button v-on:click="remove">Remove</button>
+            <transition-group name="list" tag="ul">
+                  <li v-for="item in playlists[0]" class="list-item" :key="item">
+                      {{ item.track_name }}
+                      <br>
+                  </li>
+            </transition-group>
         </div>
         <div class="small-4 columns">
             <h1> 2 </h1>
             <ul>
-                <li v-for="item in playlists[1]">
+                <li v-for="item in playlists[1]" class="list-item">
                     {{ item.track_name }}
                 </li>
             </ul>

@@ -42,7 +42,7 @@ class Spotify:
             labeled_songs = agglomerate_data(self.to_df(), 15)
             self.playlists = Playlist(labeled_songs, 15).separate()
         #else:
-            
+
 
 
     # takes a list of artist ids and returns a comma separated string of all genres (repeats)
