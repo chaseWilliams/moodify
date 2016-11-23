@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title> Moodify </title>
-    <link rel="stylesheet" href="static/app.css" />
     <link rel="stylesheet" href="static/foundation.min.css" />
+    <link rel="stylesheet" href="static/app.css" />
 </head>
 <body>
 
 <div id="app">
+
+    <div id="landing">
+        <h2><span>Revolutionize Your Listening Experience</span></h2>
+    </div>
+
+
     <div class="row">
         <div class="small-4 columns">
             <h1> 1 </h1>
-            <button v-on:click="remove">Remove</button>
+            <button v-on:click="show_all">Show All</button>
             <transition-group name="list" tag="ul">
-                  <li v-for="item in playlists[0]" class="list-item" :key="item">
+                  <li v-for="item in shortened_playlists[0]" class="list-item" :key="item">
                       {{ item.track_name }}
-                      <br>
                   </li>
             </transition-group>
         </div>
         <div class="small-4 columns">
             <h1> 2 </h1>
             <ul>
-                <li v-for="item in playlists[1]" class="list-item">
+                <li v-for="item in shortened_playlists[1]" class="list-item">
                     {{ item.track_name }}
                 </li>
             </ul>
@@ -31,7 +36,7 @@
         <div class="small-4 columns">
             <h1> 3 </h1>
             <ul>
-                <li v-for="item in playlists[3]">
+                <li v-for="item in shortened_playlists[3]">
                     {{ item.track_name }}
                 </li>
             </ul>

@@ -19,23 +19,35 @@
 
 }
 
+#landing {
+    position: relative;
+    width: 100%; /* for IE 6 */
+    height: 825px;
+    z-index: 1000;
+    background: url('/static/mixtables.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
 .item {
 
 }
-
-ul {
-    list-style: none;
-    margin-left: 0;
-    padding-left: 1.2em;
-    text-indent: -1.2em;
+h2 {
+    position: absolute;
+    top: 150px;
+    text-align: center;
+    width: 100%;
+    font: 50px Helvetica;
+}
+h2 span {
+    color: whitesmoke;
+    font: bold 100px Helvetica, Sans-Serif;
+    letter-spacing: -1px;
+    padding: 10%;
 }
 
-li:before {
-    content: "►";
-    display: block;
-    float: left;
-    width: 1.2em;
-    color: #ff0000;
+ul {
+    list-style-type: none;
 }
 
 h1 {
@@ -45,7 +57,7 @@ h1 {
 }
 
 .list-item {
-  display: inline-block;
+
 }
 .list-enter-active, .list-leave-active {
   transition: all 1s;
