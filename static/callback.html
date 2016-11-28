@@ -15,12 +15,12 @@
     </div>
 
 
-    <div class="row">
+    <div class="row expanded songs">
         <div class="small-4 columns">
             <h1> 1 </h1>
-            <button v-on:click="show_all">Show All</button>
+            <button v-on:click="switch_display_playlist" id="show_all">Show All</button>
             <transition-group name="list" tag="ul">
-                  <li v-for="item in shortened_playlists[0]" class="list-item" :key="item">
+                  <li v-for="item in display_playlists[0]" class="list-item" :key="item">
                       {{ item.track_name }}
                   </li>
             </transition-group>
@@ -42,8 +42,6 @@
             </ul>
         </div>
     </div>
-
-    <p> L i T</p>
 </div>
 <script src="/static/vue.js"></script>
 <script

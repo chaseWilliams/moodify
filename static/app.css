@@ -5,6 +5,10 @@
 
 }
 
+.songs {
+  background-color: black;
+}
+
 .callout.primary {
     background-color: #191414;
 }
@@ -27,6 +31,10 @@
     background: url('/static/mixtables.jpg');
     background-repeat: no-repeat;
     background-size: cover;
+}
+
+#show_all {
+  color: #1db954;
 }
 
 .item {
@@ -52,12 +60,12 @@ ul {
 
 h1 {
     font-size: 40px;
-    color: #da3116;
+    color: #1db954;
     text-align: center;
 }
 
 .list-item {
-
+  color: white;
 }
 .list-enter-active, .list-leave-active {
   transition: all 1s;
