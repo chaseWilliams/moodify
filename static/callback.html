@@ -16,30 +16,34 @@
 
 
     <div class="row expanded songs">
-        <div class="small-4 columns">
+        <div class="row expanded">
+            <div class="small-3 small-centered columns emphasis_box">
+                <button v-on:click="switch_display_playlist" id="show_all">Show All</button>
+            </div>
+        </div>
+        <div class="small-4 columns playlist_format">
             <h1> 1 </h1>
-            <button v-on:click="switch_display_playlist" id="show_all">Show All</button>
             <transition-group name="list" tag="ul">
                   <li v-for="item in display_playlists[0]" class="list-item" :key="item">
                       {{ item.track_name }}
                   </li>
             </transition-group>
         </div>
-        <div class="small-4 columns">
+        <div class="small-4 columns playlist_format borders">
             <h1> 2 </h1>
             <ul>
-                <li v-for="item in shortened_playlists[1]" class="list-item">
+                <li v-for="item in display_playlists[1]" class="list-item">
                     {{ item.track_name }}
                 </li>
             </ul>
         </div>
-        <div class="small-4 columns">
+        <div class="small-4 columns playlist_format">
             <h1> 3 </h1>
-            <ul>
-                <li v-for="item in shortened_playlists[3]">
-                    {{ item.track_name }}
-                </li>
-            </ul>
+            <transition-group name="list" tag="ul">
+                  <li v-for="item in display_playlists[2]" class="list-item" :key="item">
+                      {{ item.track_name }}
+                  </li>
+            </transition-group>
         </div>
     </div>
 </div>

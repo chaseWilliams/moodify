@@ -28,7 +28,7 @@ class Spotify:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, token=None):
+    def __init__(self, redis, token=None, uid=None):
         if token is not None:
             self.token = token
             self.songs = {}
@@ -41,8 +41,12 @@ class Spotify:
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
             labeled_songs = agglomerate_data(self.to_df(), 15)
             self.playlists = Playlist(labeled_songs, 15).separate()
-        #else:
-
+            redis.set(self.uid, self.token)
+        else:
+            token = redis.get(uid).decode('utf-8')
+            self.token = token
+            self.uid = uid
+            self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
 
 
     # takes a list of artist ids and returns a comma separated string of all genres (repeats)

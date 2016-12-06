@@ -17,6 +17,23 @@
     background-color: #303036;
 }
 
+.playlist_format {
+  font: "Comic Sans MS", cursive, sans-serif;
+  text-align: center;
+}
+
+.emphasis_box {
+    background-color: #545355;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    vertical-align: middle;
+}
+
+.borders {
+    border-right: 3px solid #404040;
+    border-left: 3px solid #404040;
+}
+
 #harness {
     color: #ffffff;
     font-size: 250%;
@@ -35,11 +52,14 @@
 
 #show_all {
   color: #1db954;
+  font-size: 45pt;
+    margin-top: 15px;
 }
 
 .item {
 
 }
+
 h2 {
     position: absolute;
     top: 150px;
@@ -64,8 +84,20 @@ h1 {
     text-align: center;
 }
 
+button {
+    display: inline-block;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    height: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -25%);
+    line-height: 45pt;
+}
+
 .list-item {
   color: white;
+  font-size: 14pt;
 }
 .list-enter-active, .list-leave-active {
   transition: all 1s;

@@ -33,7 +33,7 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
-    user = Spotify(token)
+    user = Spotify(redis, token=token)
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
@@ -62,14 +62,20 @@ def retrieve():
         return response
     return string
 
+@app.route('/save', methods=['POST'])
+def save():
+    uid = request.form.get('uid')
+    playlist_index = request.form.get('playlist')
+    name = request.form.get('name')
+    key = uid + '-' + str(playlist_index)
+    playlist = redis.get(key).decode('utf-8')
+    playlist = json.loads(playlist)
+    user = Spotify(redis, uid=uid)
+    user.save_playlist(playlist, name)
+    return 'awesome'
+
 @app.route('/test')
 def test():
-    """@after_this_request
-    def add_header(response):
-        response.headers['Content-Type'] = 'text/html; charset=utf-8'
-        print('setting_headers')
-        return response
-        """
     return app.send_static_file('callback.html')
 
 @app.route('/begin')

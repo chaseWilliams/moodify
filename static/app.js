@@ -9,12 +9,6 @@ var app = new Vue({
         show_all: false
     },
     methods: {
-        remove: function () {
-            this.playlists[0].splice(this.randomIndex(), 1);
-        },
-        randomIndex: function () {
-            return Math.floor(Math.random() * this.playlists[0].length)
-        },
         substantiate_shortened_playlists: function () {
             new_playlists = this.playlists.slice(0);
             for (i = 0; i < 15; i ++) {
