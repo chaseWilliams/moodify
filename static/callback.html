@@ -22,7 +22,9 @@
             </div>
         </div>
         <div class="small-4 columns playlist_format">
-            <h1> 1 </h1>
+            <h1>
+                {{parseInt(playlist_names[0]) + 1}} <h3><button v-on:click="save_playlist(0)">Save This Playlist</button></h3>
+            </h1>
             <transition-group name="list" tag="ul">
                   <li v-for="item in display_playlists[0]" class="list-item" :key="item">
                       {{ item.track_name }}

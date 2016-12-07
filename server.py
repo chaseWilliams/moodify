@@ -41,7 +41,7 @@ def callback():
         #user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
     print('here')
-    return Response(string)
+    return app.send_static_file('callback.html')
 
 @app.route('/retrieve')
 def retrieve():
@@ -64,9 +64,10 @@ def retrieve():
 
 @app.route('/save', methods=['POST'])
 def save():
-    uid = request.form.get('uid')
-    playlist_index = request.form.get('playlist')
-    name = request.form.get('name')
+    content = request.get_json()
+    uid = content['uid']
+    playlist_index = content['playlist']
+    name = content['name']
     key = uid + '-' + str(playlist_index)
     playlist = redis.get(key).decode('utf-8')
     playlist = json.loads(playlist)

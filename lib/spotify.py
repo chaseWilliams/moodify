@@ -204,3 +204,4 @@ class Spotify:
 #user = Spotify('BQCPgPFZ6X0zydhljGcGZhXHUffhxONoNNJvRq81BK78kMgc8sA2FKm2o_qwpnNPRvgjsCzYbjbI0-brjuiHr0AW3-3yuKCe4Jq-2JDKb_P6SOEbyECmCxUQQIhlEUcTtME7BreUBZIiGdE0iO0_Hl5Baw4DK9qS')
 #user.to_csv()
 #print(user.get_song_metadata())
+foo = 123

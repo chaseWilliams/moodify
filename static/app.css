@@ -54,6 +54,14 @@
   color: #1db954;
   font-size: 45pt;
     margin-top: 15px;
+    display: inline-block;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    height: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -25%);
+    line-height: 45pt;
 }
 
 .item {
@@ -84,15 +92,14 @@ h1 {
     text-align: center;
 }
 
+h3 {
+    font-size: 25px;
+    color: #1db954;
+    text-align: center;
+}
+
 button {
-    display: inline-block;
-    position: relative;
-    top: 50%;
-    left: 50%;
-    height: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -25%);
-    line-height: 45pt;
+
 }
 
 .list-item {
