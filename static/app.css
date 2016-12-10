@@ -64,6 +64,11 @@
     line-height: 45pt;
 }
 
+#start {
+  color: #1db954;
+  font-size: 20pt;
+}
+
 .nav {
   color: #1db954;
   font-size: 30pt;

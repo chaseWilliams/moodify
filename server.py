@@ -41,7 +41,8 @@ def callback():
         #user.save_playlist(playlist, name)
     string = "we did it! your token is " + token
     print('here')
-    return app.send_static_file('callback.html')
+    print(user.uid)
+    return render_template('callback.html', uid=user.uid)
 
 @app.route('/retrieve')
 def retrieve():

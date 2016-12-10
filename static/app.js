@@ -1,4 +1,4 @@
-user_name = 'bornofawesomeness';
+console.log(user_name)
 var api_url = window.location.protocol + '//' + window.location.hostname + '/retrieve';
 var app = new Vue({
     el: '#app',
@@ -8,7 +8,8 @@ var app = new Vue({
         display_playlists: [],
         playlist_names: [],
         show_all: false,
-        curr_playlist_index: 0
+        curr_playlist_index: 0,
+        name: user_name
     },
     methods: {
         // acts as initialization method
@@ -81,7 +82,7 @@ var app = new Vue({
 
 
 
-uri = '/retrieve?uid=bornofawesomeness&playlists=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14';
+uri = '/retrieve?uid=' + user_name + '&playlists=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14';
 $.getJSON(uri).then(function(data) {
     Vue.set(app, 'playlists', data.contents);
     app.substantiate_shortened_playlists();
