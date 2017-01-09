@@ -65,7 +65,7 @@ var app = new Vue({
             data = {
                 playlist: playlist,
                 uid: user_name,
-                name: 'Moodify# ' + playlist
+                name: 'Moodify# ' + (playlist + 1)
             };
             data = JSON.stringify(data);
             $.ajax({

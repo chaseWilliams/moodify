@@ -34,6 +34,7 @@ def callback():
     response = response.json()
     token = response['access_token']
     user = Spotify(redis, token=token)
+    print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
@@ -51,8 +52,8 @@ def retrieve():
     print(uid)
     playlists = playlists.split(',')
     arr = []
-    for index, playlist in enumerate(playlists):
-        key = uid + '-' + str(index)
+    for playlist in playlists:
+        key = uid + '-' + str(playlist)
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
     string = json.dumps({'status': 'ok', 'contents': arr})
