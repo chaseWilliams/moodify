@@ -9,23 +9,30 @@ import redis as rd
 from lib.spotify import Spotify
 
 def gmm_playlists_to_csv(uid):
-    nums = ','.join(str(x) for x in range(50))
+    features = [
+        'track_id',
+        'track_name',
+        'cluster_id',
+        'danceability',
+        'energy',
+        'acousticness',
+        'valence',
+        'tempo'
+    ]
+    nums = ','.join(str(x) for x in range(40))
     api_url = 'http://127.0.0.1:5000/retrieve?uid=' + uid + '&playlists=' + nums
     data = []
     result = http.get(api_url)
     result = result.json()['contents']
+    print(len(result))
     for playlist in result:
         for track in playlist:
-            data.append([
-                track['track_id'],
-                track['track_name'],
-                track['cluster_id'],
-                track['Danceability'],
-                track['Energy'],
-                track['Acousticness'],
-                track['Valence'],
-                track['Tempo']
-            ])
+            metadata = []
+            for key in features:
+                if key in track.keys():
+                    metadata.append(track[key])
+            data.append(metadata)
+    print(len(data))
     with open('data.csv', 'w', newline='') as file:
         writer = csv.writer(file, delimiter=',')
         writer.writerow(['track_id', 'track_name', 'playlist_id', 'danceability', 'energy', 'acousticness', 'valence', 'tempo'])

@@ -29,7 +29,7 @@ class Spotify:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, redis=None, token=None, uid=None):
+    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
@@ -42,8 +42,8 @@ class Spotify:
             # url is user specific
             self.uid = self._get_user_id()
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
-            labeled_songs = agglomerate_data(self.to_df(), 50)
-            self.playlists = Playlist(labeled_songs, 50).separate()
+            labeled_songs = agglomerate_data(self.to_df(), num_playlists, chosen_features)
+            self.playlists = Playlist(labeled_songs, num_playlists).separate()
             redis.set(self.uid, self.token)
         else:
             token = redis.get(uid).decode('utf-8')
@@ -87,7 +87,7 @@ class Spotify:
     def get_song_metadata(self):
         array = self._metadata()
         df = pd.DataFrame(array)
-        df.columns = ['Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo']
+        df.columns = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
         return df
 
     # saves the specified playlist
@@ -97,9 +97,6 @@ class Spotify:
         }
         response = self._post(self.api_create_playlist, data)
         response = response.json()
-        #pp = pprint.PrettyPrinter(indent=2)
-        #pp.pprint(response)
-        #playlist_id = response['items'][0]['id']
         playlist_uri = response['href'] + '/tracks'
         uris = []
         for song in playlist:
@@ -114,7 +111,7 @@ class Spotify:
     def to_df(self):
         arr = self.get_songs()
         df = pd.DataFrame(arr)
-        df.columns = ['track_name', 'track_id', 'Danceability', 'Energy', 'Acousticness', 'Valence', 'Tempo']
+        df.columns = ['track_name', 'track_id', 'danceability', 'energy', 'acousticness', 'valence', 'tempo']
         return df
 
     # handles all outgoing http requests
