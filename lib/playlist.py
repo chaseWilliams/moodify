@@ -27,7 +27,7 @@ class Playlist:
     def _substantiate(self):
         return None
 
-    # separate the songs according to their songs
+    # separate the songs according to their cluster id's
     def separate(self):
         arr = []
         for id in range(0, self.length):

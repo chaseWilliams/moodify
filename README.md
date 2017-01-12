@@ -39,5 +39,3 @@ Addtionally, the `/save` endpoint allows anyone to save a playlist that is curre
   "name": "Moodify # 5"
 }
 ```
-
-Name can be anything
