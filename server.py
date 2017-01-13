@@ -20,6 +20,8 @@ authorize_uri = 'https://accounts.spotify.com/authorize'
 token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
 redis = None
+num_playlists = 40
+received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
 
 @app.route('/callback')
 def callback():
@@ -33,15 +35,11 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
-    user = Spotify(redis, token=token)
+    user = Spotify(received_features, num_playlists, redis=redis, token=token)
+    print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
-        name = 'Moodify #' + str(index + 1)
-        #user.save_playlist(playlist, name)
-    string = "we did it! your token is " + token
-    print('here')
-    print(user.uid)
     return render_template('callback.html', uid=user.uid)
 
 @app.route('/retrieve')
@@ -51,8 +49,9 @@ def retrieve():
     print(uid)
     playlists = playlists.split(',')
     arr = []
-    for index, playlist in enumerate(playlists):
-        key = uid + '-' + str(index)
+    for playlist in playlists:
+        key = uid + '-' + str(playlist)
+        print(key)
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
     string = json.dumps({'status': 'ok', 'contents': arr})
