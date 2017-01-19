@@ -78,7 +78,7 @@ class Spotify:
     def get_songs(self):
         arr = []
         for sample in self.songs:
-            arr.append([sample, self.songs[sample]])
+            arr.append([sample, *self.songs[sample]])
         arr = np.asarray(arr)
         result = np.hstack((arr, self.get_song_metadata().values))
         return result
@@ -111,7 +111,8 @@ class Spotify:
     def to_df(self):
         arr = self.get_songs()
         df = pd.DataFrame(arr)
-        df.columns = ['track_name', 'track_id', 'danceability', 'energy', 'acousticness', 'valence', 'tempo']
+        df.columns = ['track_name', 'track_id', 'popularity', 'danceability', 'energy', 'acousticness', 'valence', 'tempo']
+        print(df)
         return df
 
     # handles all outgoing http requests
@@ -144,7 +145,7 @@ class Spotify:
         self.total_tracks = len(self.songs)
 
     def _push_to_library(self, track_object):
-        self.songs[track_object['name']] = track_object['id']
+        self.songs[track_object['name']] = [track_object['id'], track_object['popularity']]
         for artist in track_object['artists']:
             self.artist_ids.append(artist['id'])
 
@@ -161,7 +162,7 @@ class Spotify:
                 limit = offset + 100
             for index in list(range(offset, limit, 1)):
                 name = keys[index]
-                string += self.songs[name] + ','
+                string += self.songs[name][0] + ','
             string = string.rstrip(',')
             result = self._get(self.api_track_metadata + '?ids=' + string)
             result = result.json()['audio_features']
