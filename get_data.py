@@ -12,6 +12,7 @@ def gmm_playlists_to_csv(uid):
     features = [
         'track_id',
         'track_name',
+        'popularity',
         'cluster_id',
         'danceability',
         'energy',
@@ -24,7 +25,6 @@ def gmm_playlists_to_csv(uid):
     data = []
     result = http.get(api_url)
     result = result.json()['contents']
-    print(len(result))
     for playlist in result:
         for track in playlist:
             metadata = []
@@ -32,10 +32,9 @@ def gmm_playlists_to_csv(uid):
                 if key in track.keys():
                     metadata.append(track[key])
             data.append(metadata)
-    print(len(data))
     with open('data.csv', 'w', newline='') as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow(['track_id', 'track_name', 'playlist_id', 'danceability', 'energy', 'acousticness', 'valence', 'tempo'])
+        writer.writerow(['track_id', 'track_name', 'popularity', 'playlist_id', 'danceability', 'energy', 'acousticness', 'valence', 'tempo'])
         for row in data:
             writer.writerow(row)
     return 'data.csv updated for the user ' + uid
