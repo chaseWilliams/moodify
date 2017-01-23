@@ -7,27 +7,42 @@ import pandas as pd
 import csv
 import json
 import redis as rd
+import re
 from lib.playlist import Playlist
 from lib.learn import agglomerate_data
 
-""" Spotify is a class that effectively abstracts the HTTP requests to the Spotify API
+""" Usr is a class that effectively abstracts the HTTP requests to the Spotify API
+and Last.fm API. It holds all of the user's information, but is not intended to
+persist, but rather has options for exporting to a pandas DataFrame or csv file
 
-An individual Spotify object that can act as a direct representation of a user's Spotify
 
-Song metadata includes:
+Optional metadata includes:
  - danceability
  - energy
  - acousticness
  - valence
  - tempo
+
+ Standard metadata includes:
+ - name
+ - id
+ - popularity
+ - genre
 """
 
-class Spotify:
+class User:
+    ## Spotify API URL's
     api_base = 'https://api.spotify.com/v1'
     api_library_tracks = api_base + '/me/tracks' # only returns 50 songs at a time
     api_artists = api_base + '/artists'
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
+
+    ## Last.fm API URL's
+    last_key = b333a19b2c0397e8e4c1224b49b3e7cd
+    last_genre_method = 'artist.gettopTags'
+    last_base = 'http://ws.audioscrobbler.com/2.0/?method={0}&api_key={1}&format=json'
+    last_genre_url = last_base.format(last_genre_method, last_key) + '&autocorrect=1&artist='
 
     def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None):
         if redis is None:
@@ -35,9 +50,9 @@ class Spotify:
         if token is not None:
             self.token = token
             self.songs = {}
-            self.artist_ids = []
             self.song_metadata = np.ndarray([])
             self.total_tracks = 0
+            self.artists = []
             self._build_library()
             # url is user specific
             self.uid = self._get_user_id()
@@ -50,29 +65,6 @@ class Spotify:
             self.token = token
             self.uid = uid
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
-
-
-    # takes a list of artist ids and returns a comma separated string of all genres (repeats)
-    def get_genres(self, ids):
-        artist_ids = np.array(ids)
-        ceiling = len(artist_ids)
-        all_genres = ''
-        for offset in list(range(0, ceiling, 50)):
-            string = ''
-            if offset + 50 > ceiling:
-                limit = ceiling
-            else:
-                limit = offset + 50
-            for index in list(range(offset, limit, 1)):
-                string += artist_ids[index] + ','
-            string = string.rstrip(',')
-            response = self._get(self.api_artists + '?ids=' + string)
-            response = response.json()
-            for artist in response['artists']:
-                genres = ','.join(artist['genres'])
-                all_genres += genres + ','
-        all_genres = all_genres.rstrip(',')
-        return all_genres
 
     # returns a python list of the artists' songs
     def get_songs(self):
@@ -116,8 +108,9 @@ class Spotify:
         return df
 
     # handles all outgoing http requests
-    def _get(self, endpoint):
-        request = http.get(endpoint, headers={'Authorization': 'Bearer ' + self.token})
+    def _get(self, endpoint, spotify=True):
+        if Spotify:
+            request = http.get(endpoint, headers={'Authorization': 'Bearer ' + self.token})
         return request
 
     def _post(self, endpoint, data):
@@ -143,11 +136,14 @@ class Spotify:
             for track in batch_json['items']:
                 self._push_to_library(track['track'])
         self.total_tracks = len(self.songs)
+        self._get_genres()
 
     def _push_to_library(self, track_object):
         self.songs[track_object['name']] = [track_object['id'], track_object['popularity']]
         for artist in track_object['artists']:
-            self.artist_ids.append(artist['id'])
+            name = artist['name']
+            if name not in self.artists:
+                self.artists.append(name)
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
@@ -176,9 +172,19 @@ class Spotify:
                 ])
         return np.asarray(arr)
 
-    def _get_single_genre(self, id):
-        uri = self.api_artists + '/' + id
-        response = self._get(uri)
-        response = response.json()
-        # return comma-separated str of the genres
-        return ','.join(response['genres'])
+    def _get_genres():
+        def normalize(string):
+            result = re.findall(r'([A-z])', string)
+            return ''.join(result).lower()
+        print(self.artists)
+        genres = []
+        for artist in self.artists:
+            print(artist)
+            url = last_genre_url + artist
+            response = http.get(url).json()
+            tags = response['toptags']['tag']
+            genres.append([
+                normalize(tags[0]['name']),
+                normalize(tags[1]['name'])
+            ])
+        
