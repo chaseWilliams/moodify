@@ -6,7 +6,7 @@ import pandas as pd
 import csv
 import json
 import redis as rd
-from lib.spotify import Spotify
+from lib.spotify import User
 
 def gmm_playlists_to_csv(uid):
     features = [

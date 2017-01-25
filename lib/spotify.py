@@ -10,6 +10,7 @@ import redis as rd
 import re
 from lib.playlist import Playlist
 from lib.learn import agglomerate_data
+from lib.lastfm import Lastfm
 
 """ Usr is a class that effectively abstracts the HTTP requests to the Spotify API
 and Last.fm API. It holds all of the user's information, but is not intended to
@@ -39,20 +40,22 @@ class User:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None):
+    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None, lastfm=None):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
+            self.library = pd.DataFrame()
             self.token = token
             self.songs = {}
             self.song_metadata = np.ndarray([])
             self.total_tracks = 0
             self.artists = []
             self._build_library()
+
             # url is user specific
             self.uid = self._get_user_id()
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
-            labeled_songs = agglomerate_data(self.to_df(), num_playlists, chosen_features)
+            labeled_songs = agglomerate_data(self.library, num_playlists, chosen_features)
             self.playlists = Playlist(labeled_songs, num_playlists).separate()
             redis.set(self.uid, self.token)
         else:
@@ -60,22 +63,6 @@ class User:
             self.token = token
             self.uid = uid
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
-
-    # returns a python list of the artists' songs
-    def get_songs(self):
-        arr = []
-        for sample in self.songs:
-            arr.append([sample, *self.songs[sample]])
-        arr = np.asarray(arr)
-        result = np.hstack((arr, self.get_song_metadata().values))
-        return result
-
-    # returns all of the user's songs' attributes in an panda.DataFrame
-    def get_song_metadata(self):
-        array = self._metadata()
-        df = pd.DataFrame(array)
-        df.columns = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
-        return df
 
     # saves the specified playlist
     def save_playlist(self, playlist, name):
@@ -92,13 +79,6 @@ class User:
         result = self._post(playlist_uri, dictionary)
         result = result.json()
 
-    # returns a panda DataFrame of all song data
-    def to_df(self):
-        arr = self.get_songs()
-        df = pd.DataFrame(arr)
-        df.columns = ['track_name', 'track_id', 'popularity', 'danceability', 'energy', 'acousticness', 'valence', 'tempo']
-        return df
-
     # handles all outgoing http requests
     def _get(self, endpoint, spotify=True):
         if spotify:
@@ -113,45 +93,64 @@ class User:
         return self._get(self.api_me).json()['id']
 
     def _build_library(self):
+        # build up base library metadata
+        self._base_metadata()
+
+        # add the genres
+        self._assign_genres()
+
+        # add the optional metadata
+        self._optional_metadata()
+
+    def _base_metadata(self):
         # get the first track object to determine total number of tracks in library
         response = self._get(self.api_library_tracks + '?limit=1')
         response = response.json()
         total_tracks = response['total']
 
         # go ahead and add first song
-        self._push_to_library(response['items'][0]['track'])
+        temp_arr = []
+        self._push_to_library(temp_arr, response['items'][0]['track'])
 
         # loop through and substantiate library of user
+
         for offset in list(range(1, total_tracks, 50)):
             batch = self._get(self.api_library_tracks + '?limit=50&offset=' + str(offset))
             batch_json = batch.json()
             for track in batch_json['items']:
-                self._push_to_library(track['track'])
-        self.total_tracks = len(self.songs)
+                self._push_to_library(temp_arr, track['track'])
 
-    def _push_to_library(self, track_object):
+        self.total_tracks = len(temp_arr)
+        self.library = pd.DataFrame(temp_arr)
+        self.library.columns = ['track_name', 'track_id', 'artists', 'popularity']
+
+    def _push_to_library(self, arr, track_object):
+        metadata = [track_object.get(key) for key in ['name', 'id', 'popularity']]
+        artists = [artist['name'] for artist in track_object['artists']]
+        artists = ','.join(artists)
         for artist in track_object['artists']:
             name = artist['name']
             if name not in self.artists:
                 self.artists.append(name)
-        self.songs[track_object['name']] = [track_object['id'], track_object['popularity']]
+        metadata.insert(2, artists)
+        arr.append(metadata)
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
-    def _metadata(self):
+    def _optional_metadata(self):
         arr = []
         for offset in list(range(0, self.total_tracks, 100)):
             string = ''
-            keys = list(self.songs.keys())
             if offset + 100 > self.total_tracks:
                 limit = offset + self.total_tracks - offset
             else:
                 limit = offset + 100
             for index in list(range(offset, limit, 1)):
-                name = keys[index]
-                string += self.songs[name][0] + ','
+                name = self.library['track_id'][index]
+                string += name + ','
             string = string.rstrip(',')
-            result = self._get(self.api_track_metadata + '?ids=' + string)
+            url = self.api_track_metadata + '?ids=' + string
+            result = self._get(url)
             result = result.json()['audio_features']
             for track in result:
                 arr.append([
@@ -161,4 +160,29 @@ class User:
                     track['valence'],
                     track['tempo']
                 ])
-        return np.asarray(arr)
+        df = pd.DataFrame(arr)
+        df.columns = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
+        self.library = pd.concat([self.library, df], axis=1)
+
+
+    def _assign_genres(self):
+        lastfm = Lastfm()
+        artist_genres = lastfm.get_genres(self.artists)
+        def map_genres(track_artists):
+            artists = track_artists.split(',')
+            track_genres = []
+            for artist in artists:
+                track_genres.extend(artist_genres[artist])
+            string = ''
+            for genre in track_genres:
+                if genre is not None:
+                    string += genre
+                string += ','
+            return string.rstrip(',')
+
+        find_all_genres = np.vectorize(map_genres)
+
+        genres = find_all_genres(self.library['artists'])
+        self.library['genres'] = pd.Series(genres)
+
+

@@ -21,19 +21,19 @@ class Lastfm:
                 return ''.join(result).lower()
             except IndexError:
                 return None
-        genres = []
+        genres = {}
         for artist in artists:
             url = self.last_genre_url + artist
             response = http.get(url).json()
             try:
                 tags = response['toptags']['tag']
-                genres.append([
+                genres[artist] = [
                     normalize_tags(tags, 0),
                     normalize_tags(tags, 1)
-                ])
+                ]
             except KeyError:
                 print(artist)
-                genres.append([None, None])
+                genres[artist] = [None, None]
         return genres
 
     ##def get_history():

@@ -35,6 +35,7 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
+    print(token)
     user = User(received_features, num_playlists, redis=redis, token=token)
     print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
     for index, playlist in enumerate(user.playlists):
