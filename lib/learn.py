@@ -27,6 +27,5 @@ def agglomerate_data(df, components, chosen_features):
         labeled_array.append(row)
 
     label_df = pd.DataFrame(labeled_array)
-    print(label_df)
     label_df.columns = chosen_features + ['cluster_id']
     return pd.concat([ df[['track_name', 'track_id', 'popularity']], label_df], axis=1)

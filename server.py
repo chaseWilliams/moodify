@@ -8,7 +8,7 @@ from sklearn.mixture import GMM
 import pandas as pd
 import pprint
 import csv
-from lib.spotify import Spotify
+from lib.spotify import User
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
 
@@ -35,7 +35,7 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
-    user = Spotify(received_features, num_playlists, redis=redis, token=token)
+    user = User(received_features, num_playlists, redis=redis, token=token)
     print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
@@ -71,7 +71,7 @@ def save():
     key = uid + '-' + str(playlist_index)
     playlist = redis.get(key).decode('utf-8')
     playlist = json.loads(playlist)
-    user = Spotify(redis, uid=uid)
+    user = User(redis, uid=uid)
     user.save_playlist(playlist, name)
     return 'awesome'
 
