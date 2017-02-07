@@ -81,6 +81,10 @@ def save():
 def test():
     return app.send_static_file('callback.html')
 
+@app.route('/loading')
+def loading():
+    return app.send_static_file('loading.html')
+
 @app.route('/begin')
 def begin():
     return app.send_static_file('index.html')

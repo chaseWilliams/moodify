@@ -123,6 +123,9 @@ class User:
         self._update_pusher(data)
         self._optional_metadata(2/3, change)
 
+        data['progress'] = 100
+        data['message'] = 'Finished!'
+        self._update_pusher(data)
     def _base_metadata(self, start, change):
         # get the first track object to determine total number of tracks in library
         response = self._get(self.api_library_tracks + '?limit=1')
@@ -168,6 +171,11 @@ class User:
     def _optional_metadata(self, start, change):
         arr = []
         for offset in list(range(0, self.total_tracks, 100)):
+            data = {
+                'message': 'Acquiring final metadata for each song in your library...',
+                'progress': start + change * (offset / self.total_tracks)
+            }
+            self._update_pusher(data)
             string = ''
             if offset + 100 > self.total_tracks:
                 limit = offset + self.total_tracks - offset
@@ -195,8 +203,7 @@ class User:
 
     def _assign_genres(self, start, change):
         lastfm = Lastfm()
-        artist_genres = lastfm.get_genres(self.artists)
-        count = 0
+        artist_genres = lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel)
         cap = len(self.library['artists'])
         def map_genres(track_artists):
             artists = track_artists.split(',')
@@ -208,11 +215,7 @@ class User:
                 if genre is not None:
                     string += genre
                 string += ','
-            data = {
-                'message': 'Getting Last.fm information about your user...',
-                'progress': start + change * (count / cap)
-            }
-            count += 1
+
             return string.rstrip(',')
 
         find_all_genres = np.vectorize(map_genres)

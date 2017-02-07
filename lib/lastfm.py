@@ -13,7 +13,9 @@ class Lastfm:
     def __init__(self, name=None):
         self.name = name
 
-    def get_genres(self, artists):
+    def get_genres(self, artists, start, change, pusher_client, pusher_channel):
+        count = 0
+        cap = len(artists)
         def normalize_tags(tags, index):
             try:
                 string = tags[index]['name']
@@ -23,6 +25,12 @@ class Lastfm:
                 return None
         genres = {}
         for artist in artists:
+            data = {
+                'message': 'Getting Last.fm information about your user...',
+                'progress': start + change * (count / cap)
+            }
+            pusher_client.trigger(pusher_channel, 'update', data)
+            count += 1
             url = self.last_genre_url + artist
             response = http.get(url).json()
             try:

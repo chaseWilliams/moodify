@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<head>
+  <title>Pusher Test</title>
+  <script src="https://js.pusher.com/3.2/pusher.min.js"></script>
+    <script src='static/pace.js'></script>
+    <link rel="stylesheet" href="static/foundation.min.css" />
+    <link rel="stylesheet" href="static/app.css" />
+  <script>
+
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+    curr_progress = {progress: 0}
+    paceOptions = {
+        elements: {
+            selectors: curr_progress
+        }
+    }
+    var pusher = new Pusher('33726bd9f5b34f01cc85', {
+      encrypted: true
+    });
+    Pace.sources[4] = {progress: 0}
+    var channel = pusher.subscribe('user_instantiate_bornofawesomeness');
+    channel.bind('update', function(data) {
+      console.log(data.message);
+        Pace.sources[4].progress = data.progress * 100
+    });
+  </script>
+</head>
+<body>
+wassup
+</body>
