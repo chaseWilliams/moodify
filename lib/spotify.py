@@ -103,7 +103,7 @@ class User:
 
     def _build_library(self):
         # build up base library metadata
-        change = 1 / 3
+        change = 1 / 3 * 100
         data = {
             'message': 'Grabbing basic metadata about your library...',
             'progress': 0
@@ -112,16 +112,16 @@ class User:
         self._base_metadata(0, change)
 
         # add the genres
-        data['progress'] = 1 / 3
+        data['progress'] = change
         data['message'] = 'Getting Last.fm information about your user...'
         self._update_pusher(data)
-        self._assign_genres(1/3, change)
+        self._assign_genres(change, change)
 
         # add the optional metadata
-        data['progress'] = 2 / 3
+        data['progress'] = change * 2
         data['message'] = 'Acquiring final metadata for each song in your library...'
         self._update_pusher(data)
-        self._optional_metadata(2/3, change)
+        self._optional_metadata(change * 2, change)
 
         data['progress'] = 100
         data['message'] = 'Finished!'

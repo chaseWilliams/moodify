@@ -26,8 +26,8 @@ class Lastfm:
         genres = {}
         for artist in artists:
             data = {
-                'message': 'Getting Last.fm information about your user...',
-                'progress': start + change * (count / cap)
+                'message': 'Getting Last.fm information about {0}...'.format(artist),
+                'progress': start + change * (count / cap) 
             }
             pusher_client.trigger(pusher_channel, 'update', data)
             count += 1
