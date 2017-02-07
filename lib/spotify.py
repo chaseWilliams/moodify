@@ -11,6 +11,7 @@ import re
 from lib.playlist import Playlist
 from lib.learn import agglomerate_data
 from lib.lastfm import Lastfm
+import pusher
 
 """ Usr is a class that effectively abstracts the HTTP requests to the Spotify API
 and Last.fm API. It holds all of the user's information, but is not intended to
@@ -50,10 +51,18 @@ class User:
             self.song_metadata = np.ndarray([])
             self.total_tracks = 0
             self.artists = []
+            self.uid = self._get_user_id()
+            self.pusher_client = pusher.Pusher(
+                app_id='298964',
+                key='33726bd9f5b34f01cc85',
+                secret='391150c34b190fc05dc4',
+                ssl=True
+            )
+            self.pusher_channel = 'user_instantiate_{0}'.format(self.uid)
             self._build_library()
 
             # url is user specific
-            self.uid = self._get_user_id()
+
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
             labeled_songs = agglomerate_data(self.library, num_playlists, chosen_features)
             self.playlists = Playlist(labeled_songs, num_playlists).separate()
@@ -94,15 +103,27 @@ class User:
 
     def _build_library(self):
         # build up base library metadata
-        self._base_metadata()
+        change = 1 / 3
+        data = {
+            'message': 'Grabbing basic metadata about your library...',
+            'progress': 0
+        }
+        self._update_pusher(data)
+        self._base_metadata(0, change)
 
         # add the genres
-        self._assign_genres()
+        data['progress'] = 1 / 3
+        data['message'] = 'Getting Last.fm information about your user...'
+        self._update_pusher(data)
+        self._assign_genres(1/3, change)
 
         # add the optional metadata
-        self._optional_metadata()
+        data['progress'] = 2 / 3
+        data['message'] = 'Acquiring final metadata for each song in your library...'
+        self._update_pusher(data)
+        self._optional_metadata(2/3, change)
 
-    def _base_metadata(self):
+    def _base_metadata(self, start, change):
         # get the first track object to determine total number of tracks in library
         response = self._get(self.api_library_tracks + '?limit=1')
         response = response.json()
@@ -115,6 +136,13 @@ class User:
         # loop through and substantiate library of user
 
         for offset in list(range(1, total_tracks, 50)):
+            progress = offset / total_tracks
+            progress_bar_location = change * progress + start
+            data = {
+                'message': 'Grabbing basic metadata about your library...',
+                'progress': progress_bar_location
+            }
+            self._update_pusher(data)
             batch = self._get(self.api_library_tracks + '?limit=50&offset=' + str(offset))
             batch_json = batch.json()
             for track in batch_json['items']:
@@ -137,7 +165,7 @@ class User:
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
-    def _optional_metadata(self):
+    def _optional_metadata(self, start, change):
         arr = []
         for offset in list(range(0, self.total_tracks, 100)):
             string = ''
@@ -165,9 +193,11 @@ class User:
         self.library = pd.concat([self.library, df], axis=1)
 
 
-    def _assign_genres(self):
+    def _assign_genres(self, start, change):
         lastfm = Lastfm()
         artist_genres = lastfm.get_genres(self.artists)
+        count = 0
+        cap = len(self.library['artists'])
         def map_genres(track_artists):
             artists = track_artists.split(',')
             track_genres = []
@@ -178,6 +208,11 @@ class User:
                 if genre is not None:
                     string += genre
                 string += ','
+            data = {
+                'message': 'Getting Last.fm information about your user...',
+                'progress': start + change * (count / cap)
+            }
+            count += 1
             return string.rstrip(',')
 
         find_all_genres = np.vectorize(map_genres)
@@ -185,4 +220,5 @@ class User:
         genres = find_all_genres(self.library['artists'])
         self.library['genres'] = pd.Series(genres)
 
-
+    def _update_pusher(self, data):
+        self.pusher_client.trigger(self.pusher_channel, 'update', data)
