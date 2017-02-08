@@ -78,13 +78,14 @@ def save():
     user.save_playlist(playlist, name)
     return 'awesome'
 
+# test endpoint
 @app.route('/test')
 def test():
     return app.send_static_file('callback.html')
-
+# test endpoint
 @app.route('/loading')
 def loading():
-    return app.send_static_file('loading.html')
+    return render_template('loading.html', uid='bornofawesomeness')
 
 @app.route('/final')
 def final():
