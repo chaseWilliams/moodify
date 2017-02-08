@@ -2,7 +2,11 @@
 
 .moodify {
     color: #1db954;
+    font-size: 5rem;
+}
 
+.background {
+  background-color: black;
 }
 
 .songs {
@@ -14,11 +18,18 @@
 }
 
 .top-bar {
-    background-color: #303036;
+    background-color: black;
 }
 
 .playlist_format {
   font: "Comic Sans MS", cursive, sans-serif;
+  text-align: center;
+}
+
+.description {
+  color: white;
+  font-size: 1.5rem;
+  padding-top: 3%;
   text-align: center;
 }
 
@@ -45,7 +56,7 @@
     width: 100%; /* for IE 6 */
     height: 825px;
     z-index: 1000;
-    background: url('/static/mixtables.jpg');
+    background: url('/static/img/mixtables.jpg');
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -65,8 +76,9 @@
 }
 
 #start {
-  color: #1db954;
-  font-size: 20pt;
+  color: #65869a;
+  font-size: 4rem;
+  text-align: center;
 }
 
 .nav {
