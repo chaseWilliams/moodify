@@ -1,4 +1,4 @@
-from flask import Flask, Response, redirect, request, url_for, render_template, after_this_request
+from flask import Flask, Response, redirect, request, url_for, render_template, after_this_request, g
 import requests as http
 import redis as rd
 import json
@@ -8,9 +8,11 @@ from sklearn.mixture import GMM
 import pandas as pd
 import pprint
 import csv
-from lib.spotify import Spotify
+from lib.spotify import User
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
+from lib.tasks import create_user
+from pusher import Pusher
 
 app = Flask(__name__)
 client_id = 'c23563670ff943438fdc616383e9f0ea'
@@ -25,6 +27,7 @@ received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo
 
 @app.route('/callback')
 def callback():
+    print('got response')
     code = request.args.get('code')
     response = http.post(token_uri, data = {
         'grant_type': 'authorization_code',
@@ -35,12 +38,12 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
-    user = Spotify(received_features, num_playlists, redis=redis, token=token)
-    print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
-    for index, playlist in enumerate(user.playlists):
-        key = user.uid + '-' + str(index)
-        redis.set(key, json.dumps(playlist))
-    return render_template('callback.html', uid=user.uid)
+    print(token)
+    api_me = 'https://api.spotify.com/v1/me'
+    uid = http.get(api_me, headers={'Authorization': 'Bearer ' + token}).json()['id']
+    create_user.delay(token)
+    return render_template('loading.html', uid=uid)
+
 
 @app.route('/retrieve')
 def retrieve():
@@ -71,13 +74,24 @@ def save():
     key = uid + '-' + str(playlist_index)
     playlist = redis.get(key).decode('utf-8')
     playlist = json.loads(playlist)
-    user = Spotify(redis, uid=uid)
+    user = User(redis, uid=uid)
     user.save_playlist(playlist, name)
     return 'awesome'
 
+# test endpoint
 @app.route('/test')
 def test():
     return app.send_static_file('callback.html')
+# test endpoint
+@app.route('/loading')
+def loading():
+    return render_template('loading.html', uid='bornofawesomeness')
+
+@app.route('/final')
+def final():
+    print('yo')
+    uid = request.args.get('uid')
+    return render_template('callback.html', uid=uid)
 
 @app.route('/begin')
 def begin():
@@ -87,6 +101,18 @@ def begin():
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
                     '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')
+
+def after_this_request(func):
+    if not hasattr(g, 'call_after_request'):
+        g.call_after_request = []
+    g.call_after_request.append(func)
+    return func
+
+@app.after_request
+def per_request_callbacks(response):
+    for func in getattr(g, 'call_after_request', ()):
+        response = func(response)
+    return response
 
 @app.after_request
 def add_header(r):

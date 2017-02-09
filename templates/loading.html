@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% raw %}
+<head>
+  <title>Pusher Test</title>
+  <script src="https://js.pusher.com/3.2/pusher.min.js"></script>
+    <link rel="stylesheet" href="static/foundation.min.css" />
+    <link rel="stylesheet" href="static/loading/loading.css" />
+</head>
+<body style='background-color: black;'>
+  <div id='app'>
+    <div class="row expanded background">
+      <div class="small-8 columns">
+        <h2> {{progress}}% </h2>
+        <p> {{message}} </p>
+      </div>
+      <div class="small-4 columns">
+        <div id="loader"></div>
+      </div>
+    </div>
+  </div>
+  <div class='loading'></div>
+<script src="/static/vue.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+<script src="/static/foundation.min.js"></script>
+<script src="static/loading/loading.js"></script>
+<script>
+{% endraw %}
+  user_name = '{{uid}}'
+</script>
+</body>
