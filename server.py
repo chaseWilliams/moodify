@@ -1,4 +1,4 @@
-from flask import Flask, Response, redirect, request, url_for, render_template, after_this_request, g
+from flask import Flask, Response, redirect, request, url_for, render_template, after_this_request, g, make_response
 import requests as http
 import redis as rd
 import json
@@ -58,12 +58,9 @@ def retrieve():
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
     string = json.dumps({'status': 'ok', 'contents': arr})
-
-    @app.after_request
-    def add_header(response):
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    return string
+    response = make_response(string)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 @app.route('/save', methods=['POST'])
 def save():
@@ -102,17 +99,6 @@ def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
                     '&response_type=code&redirect_uri=' + redirect_uri + '&scope=user-library-read playlist-modify-public')
 
-def after_this_request(func):
-    if not hasattr(g, 'call_after_request'):
-        g.call_after_request = []
-    g.call_after_request.append(func)
-    return func
-
-@app.after_request
-def per_request_callbacks(response):
-    for func in getattr(g, 'call_after_request', ()):
-        response = func(response)
-    return response
 
 @app.after_request
 def add_header(r):

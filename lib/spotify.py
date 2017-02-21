@@ -209,7 +209,11 @@ class User:
             artists = track_artists.split(',')
             track_genres = []
             for artist in artists:
-                track_genres.extend(artist_genres[artist])
+                # may not find the artist, that's ok
+                try:
+                    track_genres.extend(artist_genres[artist])
+                except KeyError:
+                    pass
             string = ''
             for genre in track_genres:
                 if genre is not None:
