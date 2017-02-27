@@ -54,12 +54,10 @@ def callback():
 def retrieve():
     uid = request.args.get('uid')
     playlists = request.args.get('playlists')
-    print(uid)
     playlists = playlists.split(',')
     arr = []
     for playlist in playlists:
         key = uid + '-' + str(playlist)
-        print(key)
         result = redis.get(key).decode('utf-8')
         arr.append(json.loads(result))
     string = json.dumps({'status': 'ok', 'contents': arr})
@@ -89,15 +87,15 @@ def test():
 def loading():
     return render_template('loading.html', uid='bornofawesomeness')
 
+@app.route('/begin')
+def begin():
+    return app.send_static_file('index.html')
+    
 @app.route('/final')
 def final():
     print('yo')
     uid = request.args.get('uid')
     return render_template('callback.html', uid=uid)
-
-@app.route('/begin')
-def begin():
-    return app.send_static_file('index.html')
 
 @app.route('/authenticate')
 def authenticate():

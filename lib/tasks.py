@@ -28,7 +28,6 @@ received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo
 @background_manager.task
 def create_user(token):
     user = User(received_features, num_playlists, redis=redis, token=token)
-    print('USER -- ' + user.uid + " -- TOKEN IS:\n" + token + "\n")
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))

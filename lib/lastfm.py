@@ -48,7 +48,6 @@ class Lastfm:
             count += 1
             url = self.last_genre_url + artist
             response = http.get(url).json()
-            print(response)
             try:
                 tags = response['toptags']['tag']
                 genres[artist] = [
@@ -56,8 +55,8 @@ class Lastfm:
                     normalize_tags(tags, 1)
                 ]
             except KeyError:
-                print('key error', artist)
                 genres[artist] = [None, None]
+                
         return genres
 
     def get_history(self,):
