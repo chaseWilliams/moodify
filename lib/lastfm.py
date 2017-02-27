@@ -17,9 +17,13 @@ class Lastfm:
     last_genre_url = last_base.format(last_genre_method, last_key) + '&autocorrect=1&artist='
     last_history_url = last_base.format(last_history_method, last_key) + '&limit=200&user='
 
-    def __init__(self, name=None, spotify=None):
+    def __init__(self, name=None, spotify=None, pusher=None):
         if name is not None:
             self.name = name
+            self.pusher_client = pusher['obj']
+            self.pusher_start = pusher['start']
+            self.pusher_change = pusher['change']
+            self.pusher_channel = pusher['channel']
             self.get_history()
             self.refine_df(spotify)
 
@@ -44,6 +48,7 @@ class Lastfm:
             count += 1
             url = self.last_genre_url + artist
             response = http.get(url).json()
+            print(response)
             try:
                 tags = response['toptags']['tag']
                 genres[artist] = [
@@ -51,7 +56,7 @@ class Lastfm:
                     normalize_tags(tags, 1)
                 ]
             except KeyError:
-                print(artist)
+                print('key error', artist)
                 genres[artist] = [None, None]
         return genres
 
@@ -68,10 +73,14 @@ class Lastfm:
         for track in track_data:
             history.append(self._check_track(track))
             
-        print('Starting! There are ' + limit + ' pages')
         while int(data['recenttracks']['@attr']['page']) is not int(limit):
-            if page % 25 is 0:
-                print('Page %i' % page)
+            progress = page / int(limit)
+            progress_bar_location = self.pusher_change * progress + self.pusher_start
+            pusher_data = {
+                'message': 'On page {0} out of {1} pages of your history'.format(page, limit),
+                'progress': progress_bar_location
+            }
+            self.pusher_client.trigger(self.pusher_channel, 'update', pusher_data)
             page += 1
             data = http.get(url + '&page=' + str(page)).json()
             for track in data['recenttracks']['track']:

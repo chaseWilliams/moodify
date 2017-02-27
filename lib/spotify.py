@@ -112,12 +112,17 @@ class User:
         self._update_pusher(data)
         self._base_metadata(0, change)
 
-        # add the genres
+        # get history data
         data['progress'] = change
         data['message'] = 'Downloading your listening history...'
         self._update_pusher(data)
-        self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library)
-        
+        self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, pusher={
+            'obj': self.pusher_client,
+            'start': change,
+            'change': change,
+            'channel': self.pusher_channel
+        })
+        self.library['count'] = self.lastfm.get_count(self.library)
         # add the genres
         data['progress'] = change * 2
         data['message'] = 'Getting Last.fm information about your user...'

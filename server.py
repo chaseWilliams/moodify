@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.mixture import GMM
 import pandas as pd
 import pprint
+import os
 import csv
 from lib.spotify import User
 from lib.learn import agglomerate_data
@@ -17,7 +18,12 @@ from pusher import Pusher
 app = Flask(__name__)
 client_id = 'c23563670ff943438fdc616383e9f0ea'
 client_secret = '08e420d130d94312a20123663db0ec25'
-redirect_uri = 'http://127.0.0.1:5000/callback'
+ip = os.environ.get('IP', '0.0.0.0')
+port = os.environ.get('PORT', '5000')
+if ip == '0.0.0.0' and port == '8080':
+    redirect_uri = 'http://moodify-dev-dude0faw3.c9users.io/callback'
+else:
+    redirect_uri = 'http://{0}:{1}/callback'.format(ip, port)
 authorize_uri = 'https://accounts.spotify.com/authorize'
 token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
@@ -27,7 +33,6 @@ received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo
 
 @app.route('/callback')
 def callback():
-    print('got response')
     code = request.args.get('code')
     response = http.post(token_uri, data = {
         'grant_type': 'authorization_code',
@@ -109,4 +114,7 @@ def add_header(r):
 
 if __name__ == "__main__":
     redis = rd.StrictRedis(host='localhost', port=6379, db=0)
-    app.run()
+    app.run(
+        host = ip,
+        port = port
+        )

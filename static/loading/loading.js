@@ -1,4 +1,4 @@
-var api_url = 'http://127.0.0.1:5000/final?uid='
+var api_url =  window.location.protocol + '//' + window.location.hostname + '/final?uid='
 // Enable pusher logging - don't include this in production
 Pusher.logToConsole = true;
 var pusher = new Pusher('33726bd9f5b34f01cc85', {
