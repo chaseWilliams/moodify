@@ -4,7 +4,7 @@ from lib.lastfm import Lastfm
 def make_filters():
     pass
 
-def filter(df, feature, top_percentage, reverse=False):
+def filter_by(df, feature, top_percentage, reverse=False):
     max = df[feature].values.max()
     if neglected:
         temp_df = df.sort_values(feature, ascending=True)

@@ -41,7 +41,7 @@ class User:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None, lastfm=None):
+    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None, lastfm_name='dude0faw3'):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
@@ -51,6 +51,7 @@ class User:
             self.song_metadata = np.ndarray([])
             self.total_tracks = 0
             self.artists = []
+            self.lastfm_name = lastfm_name
             self.uid = self._get_user_id()
             self.pusher_client = pusher.Pusher(
                 app_id='298964',
@@ -103,7 +104,7 @@ class User:
 
     def _build_library(self):
         # build up base library metadata
-        change = 1 / 3 * 100
+        change = 1 / 4 * 100
         data = {
             'message': 'Grabbing basic metadata about your library...',
             'progress': 0
@@ -113,15 +114,21 @@ class User:
 
         # add the genres
         data['progress'] = change
+        data['message'] = 'Downloading your listening history...'
+        self._update_pusher(data)
+        self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library)
+        
+        # add the genres
+        data['progress'] = change * 2
         data['message'] = 'Getting Last.fm information about your user...'
         self._update_pusher(data)
-        self._assign_genres(change, change)
+        self._assign_genres(change * 2, change)
 
         # add the optional metadata
-        data['progress'] = change * 2
+        data['progress'] = change * 3
         data['message'] = 'Acquiring final metadata for each song in your library...'
         self._update_pusher(data)
-        self._optional_metadata(change * 2, change)
+        self._optional_metadata(change * 3, change)
 
         data['progress'] = 100
         data['message'] = 'Finished!'
@@ -202,8 +209,7 @@ class User:
 
 
     def _assign_genres(self, start, change):
-        lastfm = Lastfm()
-        artist_genres = lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel)
+        artist_genres = self.lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel)
         cap = len(self.library['artists'])
         def map_genres(track_artists):
             artists = track_artists.split(',')

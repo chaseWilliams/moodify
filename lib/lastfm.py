@@ -113,7 +113,7 @@ class Lastfm:
             if season is None:
                 history = machine.in_year(self.history_df)
             else:
-                history = machine.in_season(season, year)
+                history = machine.in_season(season, self.history_df)
         else:
             history = self.history_df
         track_artists = track_artists.split(',')
