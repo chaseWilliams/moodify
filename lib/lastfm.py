@@ -118,7 +118,7 @@ class Lastfm:
             year = timeslice[0]
             season = timeslice[1]
             machine = TimeMachine(year)
-            if season is None:
+            if season == 'all':
                 history = machine.in_year(self.history_df)
             else:
                 history = machine.in_season(season, self.history_df)
@@ -132,7 +132,7 @@ class Lastfm:
                     if self.strip_accents(artist.lower()) == self.strip_accents(history_artist.lower()):
                         count += 1
         return count
-    # timeslice should be a tuple of year(, season)
+    # timeslice should be a tuple of year, season (or 'all')
     def get_count(self, spotify, timeslice=None):
         count_arr = [None] * len(spotify)
         for row in spotify.itertuples():

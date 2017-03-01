@@ -18,7 +18,7 @@ from pusher import Pusher
 app = Flask(__name__)
 client_id = 'c23563670ff943438fdc616383e9f0ea'
 client_secret = '08e420d130d94312a20123663db0ec25'
-ip = os.environ.get('IP', '0.0.0.0')
+ip = os.environ.get('IP', '127.0.0.1')
 port = os.environ.get('PORT', '5000')
 if ip == '0.0.0.0' and port == '8080':
     redirect_uri = 'http://moodify-dev-dude0faw3.c9users.io/callback'
@@ -78,11 +78,6 @@ def save():
     user.save_playlist(playlist, name)
     return 'awesome'
 
-# test endpoint
-@app.route('/test')
-def test():
-    return app.send_static_file('callback.html')
-# test endpoint
 @app.route('/loading')
 def loading():
     return render_template('loading.html', uid='bornofawesomeness')
