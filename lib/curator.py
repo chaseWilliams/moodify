@@ -14,9 +14,14 @@ def filter_with(user, filters):
         if filters[key] is not None:
             params = filters[key]
             method = params[0]
+            if len(params) == 2:
+                method_params = params[1]
+            else:
+                method_params = {}
             if method == 'filter_by':
-                temp_df = filter_by(temp_df, key, *params[1:])
-
+                temp_df = filter_by(temp_df, key, **method_params)
+            if method == 'filter_in_range':
+                temp_df = filter_in_range(temp_df, key, **method_params)
     return temp_df
 
 
