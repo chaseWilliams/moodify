@@ -13,7 +13,9 @@ from lib.spotify import User
 from lib.learn import agglomerate_data
 from lib.playlist import Playlist
 from lib.tasks import create_user
+from lib.curator import filter_with
 from pusher import Pusher
+import pickle
 
 app = Flask(__name__)
 client_id = 'c23563670ff943438fdc616383e9f0ea'
@@ -78,6 +80,17 @@ def save():
     user.save_playlist(playlist, name)
     return 'awesome'
 
+@app.route('/create', methods=['POST'])
+def create():
+    content = request.get_json()
+    filters = content['filters']
+    uid = content['uid']
+    user_binary = redis.get(uid + '-obj')
+    user = pickle.loads(user_binary)
+    new_playlist = filter_with(user, filters)
+    return json.dumps(new_playlist)
+
+
 @app.route('/loading')
 def loading():
     return render_template('loading.html', uid='bornofawesomeness')
@@ -110,4 +123,4 @@ if __name__ == "__main__":
     app.run(
         host = ip,
         port = port
-        )
+    )

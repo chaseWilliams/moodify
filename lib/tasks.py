@@ -13,6 +13,7 @@ from lib.learn import agglomerate_data
 from lib.playlist import Playlist
 from pusher import Pusher
 from celery import Celery
+import pickle
 
 background_manager = Celery('tasks', broker='redis://localhost:6379/0')
 client_id = 'c23563670ff943438fdc616383e9f0ea'
@@ -28,6 +29,8 @@ received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo
 @background_manager.task
 def create_user(token):
     user = User(received_features, num_playlists, redis=redis, token=token)
+    binary = pickle.dumps(user)
+    redis.set(user.uid + '-obj', binary)
     for index, playlist in enumerate(user.playlists):
         key = user.uid + '-' + str(index)
         redis.set(key, json.dumps(playlist))
