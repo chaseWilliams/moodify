@@ -83,12 +83,16 @@ def save():
 @app.route('/create', methods=['POST'])
 def create():
     content = request.get_json()
+    print(content)
     filters = content['filters']
     uid = content['uid']
     user_binary = redis.get(uid + '-obj')
     user = pickle.loads(user_binary)
     new_playlist = filter_with(user, filters)
-    return json.dumps(new_playlist)
+    string = json.dumps(new_playlist.to_json(orient='split'))
+    response = make_response(string)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 
 @app.route('/loading')
