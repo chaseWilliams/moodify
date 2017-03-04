@@ -71,26 +71,32 @@ def retrieve():
 def save():
     content = request.get_json()
     uid = content['uid']
-    playlist_index = content['playlist']
-    name = content['name']
-    key = uid + '-' + str(playlist_index)
-    playlist = redis.get(key).decode('utf-8')
-    playlist = json.loads(playlist)
-    user = User(redis, uid=uid)
-    user.save_playlist(playlist, name)
+    identifier = content['identifier']
+    playlist_name = content['name']
+    playlist = redis.get(uid + '-' + identifier).decode('utf-8')
+    playlist = pd.read_json(playlist, orient='split')
+    generic_user = User(redis, uid=uid)
+    generic_user.save_playlist(playlist, playlist_name)
     return 'awesome'
 
 @app.route('/create', methods=['POST'])
 def create():
     content = request.get_json()
-    print(content)
     filters = content['filters']
     uid = content['uid']
     user_binary = redis.get(uid + '-obj')
     user = pickle.loads(user_binary)
     new_playlist = filter_with(user, filters)
-    string = json.dumps(new_playlist.to_json(orient='split'))
-    response = make_response(string)
+    playlist_str = new_playlist.to_json(orient='split')
+    # create a unique identifier for the playlist
+    identifier = str(uuid.uuid4())
+    key = uid + '-' + identifier
+    redis.set(key, playlist_str)
+    return_data = {
+        'playlist': playlist_str,
+        'identifier': identifier
+    }
+    response = make_response(json.dumps(return_data))
     response.headers['Content-Type'] = 'application/json'
     return response
 
@@ -105,7 +111,6 @@ def begin():
     
 @app.route('/final')
 def final():
-    print('yo')
     uid = request.args.get('uid')
     return render_template('callback.html', uid=uid)
 

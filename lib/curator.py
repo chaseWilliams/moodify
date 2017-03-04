@@ -1,14 +1,17 @@
 from lib.timemachine import TimeMachine
 from lib.lastfm import Lastfm
+import pandas as pd
 
 def filter_with(user, filters):
     temp_df = user.library.copy()
     lastfm = user.lastfm
     # limit to timeslice
-    temp_df['count'] = lastfm.get_count(temp_df, filters['timeslice'])
+    if filters['timeslice'] is not None:
+        temp_df['count'] = lastfm.get_count(temp_df, filters['timeslice'])
     # limit to specified tags
-    temp_df = tag_filter(temp_df, filters['tags'])
-
+    if filters['tags'] is not None:
+        temp_df = tag_filter(temp_df, filters['tags'])
+    potentials = []
     keys = list(filters.keys())
     for key in keys:
         if filters[key] is not None:
@@ -19,19 +22,22 @@ def filter_with(user, filters):
             else:
                 method_params = {}
             if method == 'filter_by':
-                temp_df = filter_by(temp_df, key, **method_params)
+                result = filter_by(temp_df, key, **method_params)
             if method == 'filter_in_range':
-                temp_df = filter_in_range(temp_df, key, **method_params)
+                result = filter_in_range(temp_df, key, **method_params)
+            potentials.append(result)
+    for potential in potentials:
+        temp_df = pd.merge(temp_df, potential)
     return temp_df
 
 
-def filter_by(df, feature, top_percentage=0.85, reverse=False):
+def filter_by(df, feature, percentage=0.60, reverse=False):
     max = df[feature].values.max()
     if reverse:
         temp_df = df.sort_values(feature, ascending=True)
     else:
         temp_df = df.sort_values(feature, ascending=False)
-    limit = 1 - int(len(temp_df) * top_percentage)
+    limit = 1 - int(len(temp_df) * percentage)
     return temp_df.iloc[0:limit, :]
 
 def filter_in_range(df, feature, start, stop):

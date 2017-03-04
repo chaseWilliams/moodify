@@ -83,11 +83,15 @@ class User:
         response = response.json()
         playlist_uri = response['href'] + '/tracks'
         uris = []
-        for song in playlist:
-            uris.append('spotify:track:' + song['track_id'])
-        dictionary = {'uris': uris}
-        result = self._post(playlist_uri, dictionary)
-        result = result.json()
+        for count, song in enumerate(playlist.itertuples()):
+            if count == 100:
+                dictionary = {'uris': uris}
+                self._post(playlist_uri, dictionary)
+                uris = []
+            uris.append('spotify:track:' + song.track_id)
+        if len(uris) > 0:
+            dictionary = {'uris': uris}
+            self._post(playlist_uri, dictionary)
 
     # handles all outgoing http requests
     def _get(self, endpoint, spotify=True):
