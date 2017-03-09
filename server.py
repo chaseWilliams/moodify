@@ -29,7 +29,7 @@ else:
 authorize_uri = 'https://accounts.spotify.com/authorize'
 token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
-redis = None
+redis = rd.StrictRedis(host='localhost', port=6379, db=0)
 num_playlists = 40
 received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
 
@@ -84,16 +84,19 @@ def create():
     content = request.get_json()
     filters = content['filters']
     uid = content['uid']
+    pprint.pprint(filters)
     user_binary = redis.get(uid + '-obj')
     user = pickle.loads(user_binary)
     new_playlist = filter_with(user, filters)
-    playlist_str = new_playlist.to_json(orient='split')
+    playlist_json = new_playlist.to_json(orient='split')
     # create a unique identifier for the playlist
     identifier = str(uuid.uuid4())
     key = uid + '-' + identifier
-    redis.set(key, playlist_str)
+    redis.set(key, playlist_json)
+    track_names = list(new_playlist['track_name'].values)
+    print(json.dumps(track_names))
     return_data = {
-        'playlist': playlist_str,
+        'playlist': json.dumps(track_names),
         'identifier': identifier
     }
     response = make_response(json.dumps(return_data))
@@ -132,7 +135,6 @@ def add_header(r):
     return r
 
 if __name__ == "__main__":
-    redis = rd.StrictRedis(host='localhost', port=6379, db=0)
     app.run(
         host = ip,
         port = port,

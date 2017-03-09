@@ -8,9 +8,12 @@ def filter_with(user, filters):
     # limit to timeslice
     if filters['timeslice'] is not None:
         temp_df['count'] = lastfm.get_count(temp_df, filters['timeslice'])
+        del filters['timeslice']
     # limit to specified tags
     if filters['tags'] is not None:
         temp_df = tag_filter(temp_df, filters['tags'])
+        del filters['tags']
+        
     potentials = []
     keys = list(filters.keys())
     for key in keys:
