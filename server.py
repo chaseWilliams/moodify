@@ -114,6 +114,10 @@ def final():
     uid = request.args.get('uid')
     return render_template('callback.html', uid=uid)
 
+@app.route('/test')
+def test():
+    return render_template('callback.html', uid='bornofawesomeness')
+
 @app.route('/authenticate')
 def authenticate():
     return redirect(authorize_uri + '?client_id=' + client_id + \
@@ -131,5 +135,7 @@ if __name__ == "__main__":
     redis = rd.StrictRedis(host='localhost', port=6379, db=0)
     app.run(
         host = ip,
-        port = port
+        port = port,
+        debug=True,
+        use_reloader=True
     )

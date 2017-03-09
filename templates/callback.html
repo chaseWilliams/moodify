@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title> Moodify </title>
-    <script src='static/pace.js'></script>
     <link rel="stylesheet" href="static/foundation.min.css" />
     <link rel="stylesheet" href="static/app.css" />
 </head>
@@ -16,50 +15,10 @@
         <h2><span>Revolutionize Your Listening Experience</span></h2>
     </div>
 
+    <input v-model="message">
+    <h4>{{message}}</h4>
+    asdfasdf
 
-    <div class="row expanded songs">
-        <div class="row expanded">
-            <div class="small-4 columns">
-              <button class="nav" v-on:click="decrement_display_playlists()"> Backwards </button>
-            </div>
-            <div class="small-4 columns emphasis_box">
-                <button v-on:click="switch_show_all" class="show_all">Show All</button>
-            </div>
-            <div class="small-4 columns">
-              <button v-on:click="increment_display_playlists()" class="nav" style="float: right;">Forward</button>
-            </div>
-        </div>
-        <div class="small-4 columns playlist_format">
-            <h1>
-                {{parseInt(playlist_names[curr_playlist_index]) + 1}} <h3><button v-on:click="save_playlist(curr_playlist_index)">Save This Playlist</button></h3>
-            </h1>
-            <transition-group name="list" tag="ul">
-                  <li v-for="item in display_playlists[0]" class="list-item" :key="item.track_id">
-                      {{ item.track_name }}
-                  </li>
-            </transition-group>
-        </div>
-        <div class="small-4 columns playlist_format borders">
-          <h1>
-              {{parseInt(playlist_names[curr_playlist_index + 1]) + 1}} <h3><button v-on:click="save_playlist(curr_playlist_index + 1)">Save This Playlist</button></h3>
-          </h1>
-          <transition-group name="list" tag="ul">
-                <li v-for="item in display_playlists[1]" class="list-item" :key="item.track_id">
-                    {{ item.track_name }}
-                </li>
-          </transition-group>
-        </div>
-        <div class="small-4 columns playlist_format">
-          <h1>
-              {{parseInt(playlist_names[curr_playlist_index + 2]) + 1}} <h3><button v-on:click="save_playlist(curr_playlist_index + 2)">Save This Playlist</button></h3>
-          </h1>
-          <transition-group name="list" tag="ul">
-                <li v-for="item in display_playlists[2]" class="list-item" :key="item.track_id">
-                    {{ item.track_name }}
-                </li>
-          </transition-group>
-        </div>
-    </div>
 </div>
 <script src="/static/vue.js"></script>
 <script
