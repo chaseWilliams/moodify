@@ -7,6 +7,8 @@
 
 .background {
   background-color: black;
+  color: white;
+  font: Helvitica, cursive, sans-serif;
 }
 
 .songs {
@@ -19,11 +21,6 @@
 
 .top-bar {
     background-color: black;
-}
-
-.playlist_format {
-  font: "Comic Sans MS", cursive, sans-serif;
-  text-align: center;
 }
 
 .description {
@@ -88,6 +85,20 @@
 
 .item {
 
+}
+
+label, select {
+    color: inherit;
+    font: inherit;
+}
+
+select, input {
+    background-color: #42464c;
+    border: none;
+}
+
+label {
+    text-transform: capitalize;
 }
 
 h2 {

@@ -1,89 +1,100 @@
 console.log(user_name)
-var api_url = window.location.protocol + '//' + window.location.hostname + '/retrieve';
+default_args = {
+    method: 'filter_by',
+    by_args: [0.85, false],
+    range_args: [0, 100]
+}
+make_default = function() {
+    return JSON.parse(JSON.stringify(default_args))
+}
 var app = new Vue({
     el: '#app',
     data: {
-        playlists: [],
-        shortened_playlists: [],
-        display_playlists: [],
-        playlist_names: [],
-        show_all: false,
-        curr_playlist_index: 0,
-        name: user_name
+        filters: [
+            {name: 'timeslice', selected: false, argtype: 'year-season', args: {year: 2016, season: 'winter'}},
+            {name: 'tags', selected: false, argtype: 'list', args: ''},
+            {name: 'count', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'popularity', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'danceability', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'energy', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'acousticness', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'valence', selected: false, argtype: 'norm', args: make_default()},
+            {name: 'tempo', selected: false, argtype: 'norm', args: make_default()}
+        ],
+        playlist: [],
+        identifier: '',
+        playlist_name: 'Name your playlist'
     },
     methods: {
-        // acts as initialization method
-        substantiate_shortened_playlists: function () {
-            new_playlists = this.playlists.slice(0);
-            for (i = 0; i < 15; i ++) {
-                new_playlists[i] = this.playlists[i].slice(0, 5);
-            }
-            this.$set(this, 'shortened_playlists', new_playlists);
-            this.$set(this, 'display_playlists', this.shortened_playlists.slice(0, 3));
-            this.initialize_playlist_names();
-        },
-        switch_show_all: function() {
-          if (this.show_all) {
-            this.$set(this, 'display_playlists', this.shortened_playlists.slice(this.curr_playlist_index, this.curr_playlist_index + 3));
-            this.$set(this, 'show_all', false);
-          } else {
-            this.$set(this, 'display_playlists', this.playlists.slice(this.curr_playlist_index, this.curr_playlist_index + 3));
-            this.$set(this, 'show_all', true);
-          }
-        },
-        increment_display_playlists: function() {
-            if (this.curr_playlist_index < 12) {
-                index = this.curr_playlist_index;
-                this.$set(this, 'curr_playlist_index', index + 3);
-                if (this.show_all) {
-                    this.$set(this, 'display_playlists', this.playlists.slice(index + 3, index + 6));
-                } else {
-                    this.$set(this, 'display_playlists', this.shortened_playlists.slice(index + 3, index + 6));
-                    console.log('set new arr');
+        create_submission: function() {
+            len = this.filters.length
+            formatted_filters = {}
+            for (i = 0; i < len; i ++) {
+                filter = this.filters[i]
+                key = filter.name
+                if (filter.selected) {
+                    if (filter.argtype == 'norm') {
+                        if (filter.args.method == 'filter_by') {
+                            value = ['filter_by', {
+                                percentage: filter.args.by_args[0],
+                                reverse: filter.args.by_args[1]
+                            }]
+                        }
+                        else if (filter.args.method == 'filter_in_range') {
+                            value = ['filter_in_range', {
+                                start: filter.args.range_args[0],
+                                stop: filter.args.range_args[1]
+                            }]
+                        }
+                    }
+                    else if (filter.argtype == 'list') {
+                        value = filter.args.split(',')
+                    }
+                    else if (filter.argtype == 'year-season') {
+                        value = [filter.args.year, filter.args.season]
+                    }
                 }
+                else {
+                    value = null
+                }
+                formatted_filters[key] = value
             }
+            return formatted_filters
         },
-        decrement_display_playlists: function() {
-          if (this.curr_playlist_index > 0) {
-            index = this.curr_playlist_index;
-            this.$set(this, 'curr_playlist_index', index - 3);
-            if (this.show_all) {
-              this.$set(this, 'display_playlists', this.playlists.slice(index - 3, index));
-            } else {
-              this.$set(this, 'display_playlists', this.shortened_playlists.slice(index - 3, index));
-            }
-          }
-        },
-        initialize_playlist_names: function() {
-            arr = [];
-            for (i = 0; i < 15; i ++) {
-                arr[i] = i + '';
-            }
-            this.$set(this, 'playlist_names', arr);
-        },
-        save_playlist: function(playlist) {
+        create_playlist: function() {
             data = {
-                playlist: playlist,
+                filters: this.create_submission(),
+                uid: user_name
+            }
+            data = JSON.stringify(data)
+            self = this
+            $.ajax({
+                type: 'POST',
+                url: '/create',
+                headers: {'Content-Type': 'application/json'},
+                dataType: 'json',
+                data: data
+            }).done(function(data) {
+                self.playlist = JSON.parse(data.playlist)
+                self.playlist_id = data.identifier
+            })
+        },
+        save_playlist: function() {
+            save_data = {
+                identifier: this.playlist_id,
                 uid: user_name,
-                name: 'Moodify# ' + (playlist + 1)
-            };
-            data = JSON.stringify(data);
+                name: this.playlist_name
+            }
+            save_data = JSON.stringify(save_data)
             $.ajax({
                 type: 'POST',
                 url: '/save',
                 headers: {'Content-Type': 'application/json'},
                 dataType: 'json',
-                data: data
-            });
-            console.log('saving playlist ' + playlist);
+                data: save_data
+            }).done(function(data) {
+                console.log('successfully saved')
+            })
         }
     }
-});
-
-
-
-uri = '/retrieve?uid=' + user_name + '&playlists=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14';
-$.getJSON(uri).then(function(data) {
-    Vue.set(app, 'playlists', data.contents);
-    app.substantiate_shortened_playlists();
 });
