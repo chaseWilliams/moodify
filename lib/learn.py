@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 """
 Take the pandas.DataFrame and cluster the data with GMM
 """
+"""
+!!!--
+DEPRECATED
+!!!--
+
 def agglomerate_data(df, components, chosen_features):
     np.set_printoptions(threshold=np.inf)
     df = df.dropna()
@@ -29,3 +34,4 @@ def agglomerate_data(df, components, chosen_features):
     label_df = pd.DataFrame(labeled_array)
     label_df.columns = chosen_features + ['cluster_id']
     return pd.concat([ df[['track_name', 'track_id', 'popularity']], label_df], axis=1)
+"""

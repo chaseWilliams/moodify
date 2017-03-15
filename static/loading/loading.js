@@ -19,8 +19,8 @@ var app = new Vue({
     }
   }
 })
-
-var channel = pusher.subscribe('user_instantiate_bornofawesomeness');
+console.log(user_name)
+var channel = pusher.subscribe('user_instantiate_' + user_name);
 channel.bind('update', function(data) {
   Vue.set(app, 'progress', Math.round(data.progress))
   Vue.set(app, 'message', data.message)
