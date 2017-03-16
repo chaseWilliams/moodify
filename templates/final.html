@@ -60,7 +60,7 @@
             <input v-model="playlist_name">
             <a @click="create_playlist" class="button expand success">Create Playlist </a>
 
-            <div style="color: darkred;">
+            <div v-bind:style="{color: (create_failed ? 'darkred' : '#1db954')}">
                 <p> {{message}} </p>
             </div>
         </div>
@@ -78,9 +78,15 @@
     
     <div class="row expanded background">
         <div class="small-6 small-centered columns">
-            <a v-if="create_failed" class="button expand secondary"> Cannot Save </a>
-            <a v-else-if="playlist.length > 0" @click="save_playlist" class="button expand success"> Save Playlist </a>
-            <a v-else class="button expand secondary">No Playlist Created Yet </a>
+            <div v-show="create_failed">
+                <a class="button expand secondary"> Cannot Save </a>
+            </div>
+            <div v-show="playlist.length > 0 && create_failed == false">
+                <a @click="save_playlist" class="button expand success"> Save Playlist </a>
+            </div>
+            <div v-show="playlist.length == 0 && create_failed == false">
+                <a class="button expand secondary">No Playlist Created Yet </a>
+            </div>
         </div>
     </div>
 
