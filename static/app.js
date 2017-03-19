@@ -23,7 +23,9 @@ var app = new Vue({
         ],
         playlist: [],
         identifier: '',
-        playlist_name: 'Name your playlist'
+        playlist_name: 'Name your playlist',
+        message: '',
+        create_failed: false
     },
     methods: {
         create_submission: function() {
@@ -75,8 +77,18 @@ var app = new Vue({
                 dataType: 'json',
                 data: data
             }).done(function(data) {
-                self.playlist = JSON.parse(data.playlist)
-                self.playlist_id = data.identifier
+                if (data.success) {
+                    self.playlist = JSON.parse(data.playlist)
+                    self.playlist_id = data.identifier
+                    self.message = data.message
+                    self.create_failed = false
+                }
+                else {
+                    self.playlist = []
+                    self.playlist_id = ''
+                    self.message = data.message
+                    self.create_failed = true
+                }
             })
         },
         save_playlist: function() {

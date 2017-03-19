@@ -1,12 +1,21 @@
 from lib.timemachine import TimeMachine
 from lib.lastfm import Lastfm
 import pandas as pd
+import numpy as np
+
+class BadFilter(Exception):
+    pass
 
 def filter_with(user, filters):
     temp_df = user.library.copy()
     lastfm = user.lastfm
+    if filters['count'] is not None:
+        if np.isnan(user.library['count'][0]):
+            raise BadFilter
     # limit to timeslice
     if filters['timeslice'] is not None:
+        if np.isnan(user.library['count'][0]):
+            raise BadFilter
         temp_df['count'] = lastfm.get_count(temp_df, filters['timeslice'])
         del filters['timeslice']
     # limit to specified tags

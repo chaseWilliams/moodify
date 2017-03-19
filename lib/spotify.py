@@ -8,8 +8,6 @@ import csv
 import json
 import redis as rd
 import re
-from lib.playlist import Playlist
-from lib.learn import agglomerate_data
 from lib.lastfm import Lastfm
 import pusher
 
@@ -41,7 +39,7 @@ class User:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, chosen_features=None, num_playlists=None, redis=None, token=None, uid=None, lastfm_name='dude0faw3'):
+    def __init__(self, redis=None, token=None, uid=None, lastfm_name='dude0faw3'):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
@@ -52,6 +50,7 @@ class User:
             self.total_tracks = 0
             self.artists = []
             self.lastfm_name = lastfm_name
+            self.lastfm = None # placeholder
             self.uid = self._get_user_id()
             self.pusher_client = pusher.Pusher(
                 app_id='298964',
@@ -65,9 +64,6 @@ class User:
             # url is user specific
 
             self.api_create_playlist = self.api_base + '/users/' + self.uid + '/playlists'
-            labeled_songs = agglomerate_data(self.library, num_playlists, chosen_features)
-            self.playlists = Playlist(labeled_songs, num_playlists).separate()
-            redis.set(self.uid, self.token)
         else:
             token = redis.get(uid).decode('utf-8')
             self.token = token
@@ -104,6 +100,7 @@ class User:
         return request
 
     def _get_user_id(self):
+        print(self._get(self.api_me).text)
         return self._get(self.api_me).json()['id']
 
     def _build_library(self):
@@ -117,16 +114,21 @@ class User:
         self._base_metadata(0, change)
 
         # get history data
-        data['progress'] = change
-        data['message'] = 'Downloading your listening history...'
-        self._update_pusher(data)
-        self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, pusher={
-            'obj': self.pusher_client,
-            'start': change,
-            'change': change,
-            'channel': self.pusher_channel
-        })
-        self.library['count'] = self.lastfm.get_count(self.library)
+        if self.lastfm_name != '':
+            data['progress'] = change
+            data['message'] = 'Downloading your listening history...'
+            self._update_pusher(data)
+            self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, pusher={
+                'obj': self.pusher_client,
+                'start': change,
+                'change': change,
+                'channel': self.pusher_channel
+            })
+            self.library['count'] = self.lastfm.get_count(self.library)
+        else:
+            self.lastfm = Lastfm()
+            arr = [np.nan] * len(self.library)
+            self.library['count'] = pd.Series(arr)
         # add the genres
         data['progress'] = change * 2
         data['message'] = 'Getting Last.fm information about your user...'

@@ -8,12 +8,9 @@ from sklearn.mixture import GMM
 import pandas as pd
 import pprint
 import os
-import csv
 from lib.spotify import User
-from lib.learn import agglomerate_data
-from lib.playlist import Playlist
 from lib.tasks import create_user
-from lib.curator import filter_with
+from lib.curator import filter_with, BadFilter
 from pusher import Pusher
 import pickle
 
@@ -30,8 +27,16 @@ authorize_uri = 'https://accounts.spotify.com/authorize'
 token_uri = 'https://accounts.spotify.com/api/token'
 code = ''
 redis = rd.StrictRedis(host='localhost', port=6379, db=0)
-num_playlists = 40
-received_features = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
+
+@app.route('/loading')
+def loading():
+    uid = request.args.get('uid')
+    token = redis.get(uid).decode('utf-8')
+    lastfm = redis.get(uid + '-lastfm').decode('utf-8')
+    print(token, lastfm)
+    print(type(token), type(lastfm))
+    create_user.delay(token, lastfm)
+    return render_template('loading.html', uid=uid)
 
 @app.route('/callback')
 def callback():
@@ -45,12 +50,13 @@ def callback():
     })
     response = response.json()
     token = response['access_token']
-    print(token)
     api_me = 'https://api.spotify.com/v1/me'
     uid = http.get(api_me, headers={'Authorization': 'Bearer ' + token}).json()['id']
-    create_user.delay(token)
-    return render_template('loading.html', uid=uid)
-
+    redis.set(uid, token)
+    check_token = redis.get(uid).decode('utf-8')
+    print(token, check_token)
+    print(token == check_token)
+    return render_template('callback.html', uid=uid)
 
 @app.route('/retrieve')
 def retrieve():
@@ -79,6 +85,15 @@ def save():
     generic_user.save_playlist(playlist, playlist_name)
     return 'awesome'
 
+@app.route('/lastfm', methods=['POST'])
+def save_lastfm():
+    content = request.get_json()
+    lastfm = content['lastfm']
+    uid = content['uid']
+    key, value = json.dumps(uid + '-lastfm'), json.dumps(lastfm)
+    redis.set(key, value)
+    return 'saved'
+
 @app.route('/create', methods=['POST'])
 def create():
     content = request.get_json()
@@ -87,7 +102,18 @@ def create():
     pprint.pprint(filters)
     user_binary = redis.get(uid + '-obj')
     user = pickle.loads(user_binary)
-    new_playlist = filter_with(user, filters)
+    try:
+        new_playlist = filter_with(user, filters)
+    except BadFilter:
+        return_data = {
+            'playlist': [],
+            'identifier': '',
+            'success': False,
+            'message': 'History data nonexistent'
+        }
+        response = make_response(json.dumps(return_data))
+        response.headers['Content-Type'] = 'application/json'
+        return response
     playlist_json = new_playlist.to_json(orient='split')
     # create a unique identifier for the playlist
     identifier = str(uuid.uuid4())
@@ -97,29 +123,22 @@ def create():
     print(json.dumps(track_names))
     return_data = {
         'playlist': json.dumps(track_names),
-        'identifier': identifier
+        'identifier': identifier,
+        'success': True,
+        'message': 'Successfully created'
     }
     response = make_response(json.dumps(return_data))
     response.headers['Content-Type'] = 'application/json'
     return response
 
-
-@app.route('/loading')
-def loading():
-    return render_template('loading.html', uid='bornofawesomeness')
-
 @app.route('/begin')
 def begin():
     return app.send_static_file('index.html')
-    
+
 @app.route('/final')
 def final():
     uid = request.args.get('uid')
-    return render_template('callback.html', uid=uid)
-
-@app.route('/test')
-def test():
-    return render_template('callback.html', uid='bornofawesomeness')
+    return render_template('final.html', uid=uid)
 
 @app.route('/authenticate')
 def authenticate():

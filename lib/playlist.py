@@ -3,6 +3,11 @@ import numpy as np
 import random
 import pprint
 
+"""
+!--
+DEPRECATED
+!--
+
 class Playlist:
 
     # songs is a pandas.DataFrame of all the songs
@@ -45,3 +50,4 @@ class Playlist:
         index = random.randrange(self.total_songs)
         return self.songs.iloc[index, :].values.tolist()
 
+"""

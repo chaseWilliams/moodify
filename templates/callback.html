@@ -1,95 +1,31 @@
 <!DOCTYPE html>
 {% raw %}
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title> Moodify </title>
+  <title>Moodify</title>
+  <script src="https://js.pusher.com/3.2/pusher.min.js"></script>
     <link rel="stylesheet" href="static/foundation.min.css" />
-    <link rel="stylesheet" href="static/app.css" />
+    <link rel="stylesheet" href="static/callback/callback.css" />
 </head>
-<body>
-
-<div id="app">
-
-    <div id="landing">
-        <h2><span>Revolutionize Your Listening Experience</span></h2>
-    </div>
-
+<body style='background-color: black;'>
+  <div id='app'>
     <div class="row expanded background">
-        <div class='small-6 small-centered columns'>
-            <div v-for="filter in filters">
-                <input type="checkbox" v-bind:id="filter.name" v-model="filter.selected">
-                <label v-bind:for="filter.name"> {{filter.name}} </label>
-                <div v-if="filter.selected">
-                    <!-- Standard Filters -->
-                    <div v-if="filter.argtype == 'norm'">
-                        <select v-model="filter.args.method">
-                            <option value='filter_by'> Percentage To Ignore </option>
-                            <option value='filter_in_range'> Filter in a Range </option>
-                        </select>
-                        <div v-if="filter.args.method == 'filter_by'">
-                            <input v-model.number="filter.args.by_args[0]">
-                            <p>Reverse</p>
-                            <input type="checkbox" v-model="filter.args.by_args[1]">
-                        </div>
-                        <div v-else>
-                            <input v-model.number="filter.args.range_args[0]">
-                            <input v-model.number="filter.args.range_args[1]">
-                        </div>
-                    </div>
-                    
-                    <!-- Timeslice -->
-                    <div v-if="filter.argtype == 'year-season'">
-                        <select v-model="filter.args.season">
-                            <option value="all"> All </option>
-                            <option value="spring"> Spring </option>
-                            <option value="summer"> Summer </option>
-                            <option value="fall"> Fall </option>
-                            <option value="winter"> Winter </option>
-                        </select>
-                        <input v-model.number="filter.args.year">
-                    </div>
-                    
-                    <!-- Genres -->
-                    <div v-if="filter.argtype == 'list'">
-                        <p>Comma separate the values</p>
-                        <input v-model="filter.args">
-                    </div>
-                </div>
-            </div>
-            <input v-model="playlist_name">
-            <a @click="create_playlist" class="button expand success">Create Playlist </a>
-        </div>
+      <div class="small-8 columns">
+        <h2> What is your Last.fm Username? Leave blank if none</h2>
+        <input v-model='lastfm'>
+        <a @click="save_username" class="button expand success">Submit</a>
+      </div>
     </div>
-
-    <div class="row expanded background">
-        <div class="small-6 small-centered columns">
-            <ul>
-                <li v-for="song in playlist">
-                    {{song}}
-                </li>
-            </ul>
-        </div>
-    </div>
-    
-    <div class="row expanded background">
-        <div class="small-6 small-centered columns">
-            <a v-if="playlist.length > 0" @click="save_playlist" class="button expand success">Save Playlist</a>
-            <a v-else class="button expand secondary">No Playlist Created Yet </a>
-        </div>
-    </div>
-
-</div>
+  </div>
+  <div class='loading'></div>
 <script src="/static/vue.js"></script>
 <script
   src="https://code.jquery.com/jquery-3.1.1.min.js"
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
 <script src="/static/foundation.min.js"></script>
+<script src="static/callback/callback.js"></script>
 <script>
 {% endraw %}
   user_name = '{{uid}}'
 </script>
-<script src="/static/app.js"></script>
 </body>
-</html>
