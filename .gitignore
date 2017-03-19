@@ -4,3 +4,4 @@ packages.py
 dump.rdb
 .ipynb_checkpoints/
 .DS_STORE
+.vscode/
