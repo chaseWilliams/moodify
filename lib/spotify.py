@@ -11,7 +11,7 @@ import re
 from lib.lastfm import Lastfm
 import pusher
 
-""" Usr is a class that effectively abstracts the HTTP requests to the Spotify API
+""" User is a class that effectively abstracts the HTTP requests to the Spotify API
 and Last.fm API. It holds all of the user's information, but is not intended to
 persist, but rather has options for exporting to a pandas DataFrame or csv file
 
@@ -144,6 +144,7 @@ class User:
         data['progress'] = 100
         data['message'] = 'Finished!'
         self._update_pusher(data)
+
     def _base_metadata(self, start, change):
         # get the first track object to determine total number of tracks in library
         response = self._get(self.api_library_tracks + '?limit=1')
@@ -171,7 +172,7 @@ class User:
 
         self.total_tracks = len(temp_arr)
         self.library = pd.DataFrame(temp_arr)
-        self.library.columns = ['track_name', 'track_id', 'artists', 'popularity']
+        self.library.columns = ['track_name', 'track_id', 'artists', 'popularity', 'name', 'id']
 
     def _push_to_library(self, arr, track_object):
         metadata = [track_object.get(key) for key in ['name', 'id', 'popularity']]
@@ -182,6 +183,8 @@ class User:
             if name not in self.artists:
                 self.artists.append(name)
         metadata.insert(2, artists)
+        album_metadata = [track_object['album']['name'], track_object['album']['id']]
+        metadata.extend(album_metadata)
         arr.append(metadata)
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
@@ -220,29 +223,35 @@ class User:
 
 
     def _assign_genres(self, start, change):
-        artist_genres = self.lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel)
-        cap = len(self.library['artists'])
-        def map_genres(track_artists):
-            artists = track_artists.split(',')
-            track_genres = []
-            for artist in artists:
-                # may not find the artist, that's ok
-                try:
-                    track_genres.extend(artist_genres[artist])
-                except KeyError:
-                    pass
-            string = ''
-            for genre in track_genres:
-                if genre is not None:
-                    string += genre
-                string += ','
+        can_continue = False
+        def callback(artist_genres):
+            cap = len(self.library['artists'])
+            def map_genres(track_artists):
+                artists = track_artists.split(',')
+                track_genres = []
+                for artist in artists:
+                    # may not find the artist, that's ok
+                    try:
+                        track_genres.extend(artist_genres[artist])
+                    except KeyError:
+                        pass
+                string = ''
+                for genre in track_genres:
+                    if genre is not None:
+                        string += genre
+                    string += ','
 
-            return string.rstrip(',')
+                return string.rstrip(',')
 
-        find_all_genres = np.vectorize(map_genres)
+            find_all_genres = np.vectorize(map_genres)
 
-        genres = find_all_genres(self.library['artists'])
-        self.library['genres'] = pd.Series(genres)
+            genres = find_all_genres(self.library['artists'])
+            self.library['genres'] = pd.Series(genres)
+            print('set it to true')
+            can_continue = True
+        while can_continue == False:
+            pass
+        artist_genres = self.lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel, callback)
 
     def _update_pusher(self, data):
         self.pusher_client.trigger(self.pusher_channel, 'update', data)

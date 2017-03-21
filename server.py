@@ -54,8 +54,6 @@ def callback():
     uid = http.get(api_me, headers={'Authorization': 'Bearer ' + token}).json()['id']
     redis.set(uid, token)
     check_token = redis.get(uid).decode('utf-8')
-    print(token, check_token)
-    print(token == check_token)
     return render_template('callback.html', uid=uid)
 
 @app.route('/retrieve')
@@ -90,7 +88,7 @@ def save_lastfm():
     content = request.get_json()
     lastfm = content['lastfm']
     uid = content['uid']
-    key, value = json.dumps(uid + '-lastfm'), json.dumps(lastfm)
+    key, value = uid + '-lastfm', lastfm
     redis.set(key, value)
     return 'saved'
 

@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 import unicodedata
 from collections import Counter
-
+from lib.batch import async_batch_requests
+import json
 
 class Lastfm:
 
@@ -17,49 +18,49 @@ class Lastfm:
     last_genre_url = last_base.format(last_genre_method, last_key) + '&autocorrect=1&artist='
     last_history_url = last_base.format(last_history_method, last_key) + '&limit=200&user='
 
-    def __init__(self, name=None, spotify=None, pusher=None):
+    def __init__(self, name=None, spotify=None, callback=None):
         if name is not None:
             self.name = name
-            self.pusher_client = pusher['obj']
-            self.pusher_start = pusher['start']
-            self.pusher_change = pusher['change']
-            self.pusher_channel = pusher['channel']
-            self.get_history()
-            self.refine_df(spotify)
-
-
-    def get_genres(self, artists, start, change, pusher_client, pusher_channel):
-        count = 0
-        cap = len(artists)
-        def normalize_tags(tags, index):
-            try:
-                string = tags[index]['name']
-                result = re.findall(r'([A-z])', string)
-                return ''.join(result).lower()
-            except IndexError:
-                return None
+            self.spotify = spotify
+            self.get_history(callback)
+            
+    def get_genres(self, artists, callback):
+        urls = []
         genres = {}
+        url_map = {}
         for artist in artists:
-            data = {
-                'message': 'Getting Last.fm information about {0}...'.format(artist),
-                'progress': start + change * (count / cap) 
-            }
-            pusher_client.trigger(pusher_channel, 'update', data)
-            count += 1
             url = self.last_genre_url + artist
-            response = http.get(url).json()
+            url = url.replace(' ', '+')
+            urls.append(url)
+            url_map[url] = artist
+        def req_callback(**kwargs):
+            callback(genres)
+        async_batch_requests(urls, self.handle_response, req_callback, 200, genres=genres, url_map=url_map)
+        
+    def handle_response(response, genres, url_map):
+        artist = url_map[response.effective_url]
+        if response.error:
+            print("Error:", response.error, response.effective_url)
+        else:
             try:
-                tags = response['toptags']['tag']
+                res_json = json.loads(response.body.decode('utf-8'))
+                tags = res_json['toptags']['tag']
                 genres[artist] = [
-                    normalize_tags(tags, 0),
-                    normalize_tags(tags, 1)
+                    self.normalize_tags(tags, 0),
+                    self.normalize_tags(tags, 1)
                 ]
             except KeyError:
                 genres[artist] = [None, None]
-                
-        return genres
 
-    def get_history(self,):
+    def normalize_tags(self, tags, index):
+        try:
+            string = tags[index]['name']
+            result = re.findall(r'([A-z])', string)
+            return ''.join(result).lower()
+        except IndexError:
+            return None
+
+    def get_history(self, callback):
         # make initial call
         url = self.last_history_url + self.name
         data = http.get(url).json()
@@ -68,27 +69,30 @@ class Lastfm:
         limit = data['recenttracks']['@attr']['totalPages']
         page = 1
         history = []
-
+        
         for track in track_data:
             history.append(self._check_track(track))
-            
-        while int(data['recenttracks']['@attr']['page']) is not int(limit):
-            progress = page / int(limit)
-            progress_bar_location = self.pusher_change * progress + self.pusher_start
-            pusher_data = {
-                'message': 'On page {0} out of {1} pages of your history'.format(page, limit),
-                'progress': progress_bar_location
-            }
-            self.pusher_client.trigger(self.pusher_channel, 'update', pusher_data)
-            page += 1
-            data = http.get(url + '&page=' + str(page)).json()
-            for track in data['recenttracks']['track']:
-                history.append(self._check_track(track))
+
+        uris = []
+        for x in range(1, int(limit) + 1):
+            uri = url + '&page=' + str(x)
+            uris.append(uri)
         
-        history_df = pd.DataFrame(history)
-        history_df.columns = ['track_name', 'artists', 'date']
-        self.history_df = history_df
-        return history_df
+        def req_callback(response, history):
+            if response.error:
+                print("Error:", response.error, response.effective_url)
+            else:
+                data = json.loads(response.body.decode('utf-8'))
+                for track in data['recenttracks']['track']:
+                    history.append(self._check_track(track))
+
+        def final_callback(history):
+            history_df = pd.DataFrame(history)
+            history_df.columns = ['track_name', 'artists', 'date']
+            self.history_df = history_df
+            self.refine_df(self.spotify, callback)
+
+        async_batch_requests(uris, req_callback, final_callback, 200, history=history)
 
     # determine the n-most frequently played songs from a given pandas series
     def determine_frequencies(self, data, num_songs, neglected=False):
@@ -102,7 +106,7 @@ class Lastfm:
             return counter.most_common(num_songs)
 
     # clean lastfm data to only have songs currently in spotify library
-    def refine_df(self, spotify):
+    def refine_df(self, spotify, callback):
         must_haves = spotify['track_name']
         def check(val):
             for must_have in must_haves:
@@ -110,7 +114,8 @@ class Lastfm:
                     return True
             return False
         arr_check = np.vectorize(check)
-        return spotify[ arr_check(spotify[ 'track_name' ]) ]
+        self.history_df = self.history_df[ arr_check(self.history_df[ 'track_name' ]) ]
+        callback(self.history_df)
 
     def occurences_in_history(self, track_name, track_artists, timeslice=None):
         count = 0
