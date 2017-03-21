@@ -10,6 +10,8 @@ import redis as rd
 import re
 from lib.lastfm import Lastfm
 import pusher
+import logging
+logging.basicConfig(filename="debug.log", level=logging.INFO)
 
 """ User is a class that effectively abstracts the HTTP requests to the Spotify API
 and Last.fm API. It holds all of the user's information, but is not intended to
@@ -39,7 +41,7 @@ class User:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, redis=None, token=None, uid=None, lastfm_name='dude0faw3'):
+    def __init__(self, redis=None, token=None, lastfm_name='dude0faw3'):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
@@ -59,6 +61,21 @@ class User:
                 ssl=True
             )
             self.pusher_channel = 'user_instantiate_{0}'.format(self.uid)
+            self.library_callback_stack = [
+                self._base_metadata,
+                self._handle_lastfm,
+                self._assign_genres,
+                self._optional_metadata,
+                self._update_pusher
+            ]
+            self.build_library_messages = [
+                'Downloading your library and basic metadata',
+                'Connecting your library with additional Last.fm data',
+                'Assigning genres to your songs',
+                'Fetching final metadata points to create your user'
+            ]
+            self.progress = 0
+            self.logger = logging.getLogger('logger')
             self._build_library()
 
             # url is user specific
@@ -103,49 +120,33 @@ class User:
         print(self._get(self.api_me).text)
         return self._get(self.api_me).json()['id']
 
+    # cyclic method that acts as a callback:
+    # when it gets called again, it will perform the next function
+    # semi-recursive nature
     def _build_library(self):
-        # build up base library metadata
-        change = 1 / 4 * 100
-        data = {
-            'message': 'Grabbing basic metadata about your library...',
-            'progress': 0
-        }
-        self._update_pusher(data)
-        self._base_metadata(0, change)
-
-        # get history data
+        next_func = self.library_callback_stack.pop(0)
+        self._update_pusher()
+        next_func()
+        
+    # get history data
+    def _handle_lastfm(self):
+        self.logger.info('lastfm')
         if self.lastfm_name != '':
-            data['progress'] = change
-            data['message'] = 'Downloading your listening history...'
-            self._update_pusher(data)
-            self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, pusher={
-                'obj': self.pusher_client,
-                'start': change,
-                'change': change,
-                'channel': self.pusher_channel
-            })
-            self.library['count'] = self.lastfm.get_count(self.library)
+            self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, callback=self._get_count)
         else:
             self.lastfm = Lastfm()
             arr = [np.nan] * len(self.library)
             self.library['count'] = pd.Series(arr)
-        # add the genres
-        data['progress'] = change * 2
-        data['message'] = 'Getting Last.fm information about your user...'
-        self._update_pusher(data)
-        self._assign_genres(change * 2, change)
+            self._build_library()
 
-        # add the optional metadata
-        data['progress'] = change * 3
-        data['message'] = 'Acquiring final metadata for each song in your library...'
-        self._update_pusher(data)
-        self._optional_metadata(change * 3, change)
+    # callback from initializing lastfm obj in handle_lastfm 
+    # finishes the job of lastfm-related history metadata
+    def _get_count(self):
+        self.library['count'] = self.lastfm.get_count(self.library)
+        self._build_library()
 
-        data['progress'] = 100
-        data['message'] = 'Finished!'
-        self._update_pusher(data)
-
-    def _base_metadata(self, start, change):
+    def _base_metadata(self):
+        self.logger.info('base')
         # get the first track object to determine total number of tracks in library
         response = self._get(self.api_library_tracks + '?limit=1')
         response = response.json()
@@ -158,13 +159,6 @@ class User:
         # loop through and substantiate library of user
 
         for offset in list(range(1, total_tracks, 50)):
-            progress = offset / total_tracks
-            progress_bar_location = change * progress + start
-            data = {
-                'message': 'Grabbing basic metadata about your library...',
-                'progress': progress_bar_location
-            }
-            self._update_pusher(data)
             batch = self._get(self.api_library_tracks + '?limit=50&offset=' + str(offset))
             batch_json = batch.json()
             for track in batch_json['items']:
@@ -173,6 +167,7 @@ class User:
         self.total_tracks = len(temp_arr)
         self.library = pd.DataFrame(temp_arr)
         self.library.columns = ['track_name', 'track_id', 'artists', 'popularity', 'name', 'id']
+        self._build_library()
 
     def _push_to_library(self, arr, track_object):
         metadata = [track_object.get(key) for key in ['name', 'id', 'popularity']]
@@ -189,14 +184,10 @@ class User:
 
     # store all of the songs' metadata in a NumPy matrix, where index number is the same
     # as Spotify.user_songs
-    def _optional_metadata(self, start, change):
+    def _optional_metadata(self):
+        self.logger.info('optional')
         arr = []
         for offset in list(range(0, self.total_tracks, 100)):
-            data = {
-                'message': 'Acquiring final metadata for each song in your library...',
-                'progress': start + change * (offset / self.total_tracks)
-            }
-            self._update_pusher(data)
             string = ''
             if offset + 100 > self.total_tracks:
                 limit = offset + self.total_tracks - offset
@@ -220,38 +211,49 @@ class User:
         df = pd.DataFrame(arr)
         df.columns = ['danceability', 'energy', 'acousticness', 'valence', 'tempo']
         self.library = pd.concat([self.library, df], axis=1)
+        self._build_library()
 
 
-    def _assign_genres(self, start, change):
-        can_continue = False
+    def _assign_genres(self):
+        self.logger.info('genres')
         def callback(artist_genres):
-            cap = len(self.library['artists'])
-            def map_genres(track_artists):
-                artists = track_artists.split(',')
-                track_genres = []
-                for artist in artists:
-                    # may not find the artist, that's ok
-                    try:
-                        track_genres.extend(artist_genres[artist])
-                    except KeyError:
-                        pass
-                string = ''
-                for genre in track_genres:
-                    if genre is not None:
-                        string += genre
-                    string += ','
-
-                return string.rstrip(',')
-
             find_all_genres = np.vectorize(map_genres)
-
             genres = find_all_genres(self.library['artists'])
             self.library['genres'] = pd.Series(genres)
-            print('set it to true')
-            can_continue = True
-        while can_continue == False:
-            pass
-        artist_genres = self.lastfm.get_genres(self.artists, start, change, self.pusher_client, self.pusher_channel, callback)
+   
+        artist_genres = self.lastfm.get_genres(self.artists, callback)
+        self._build_library()
 
-    def _update_pusher(self, data):
+    def map_genres(track_artists):
+        artists = track_artists.split(',')
+        track_genres = []
+        for artist in artists:
+            # may not find the artist, that's ok
+            try:
+                track_genres.extend(artist_genres[artist])
+            except KeyError:
+                pass
+        string = ''
+        for genre in track_genres:
+            if genre is not None:
+                string += genre
+            string += ','
+
+        return string.rstrip(',')
+
+    def _update_pusher(self):
+        step_size = 1 / len(self.library_callback_stack)
+        self.progress += 1
+        if self.progress is len(self.library_callback_stack):
+            data = {
+                'progress': 100,
+                'message': 'All done!'
+            }
+        else:
+            progress = self.progress * step_size
+            message = self.build_library_messages[self.progress - 1]
+            data = {
+                'progress': progress,
+                'message': message
+            }
         self.pusher_client.trigger(self.pusher_channel, 'update', data)
