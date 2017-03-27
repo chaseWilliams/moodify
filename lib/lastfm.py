@@ -7,6 +7,8 @@ import unicodedata
 from collections import Counter
 from lib.batch import async_batch_requests
 import json
+import logging
+logging.basicConfig(filename="debug.log", level=logging.INFO)
 
 class Lastfm:
 
@@ -20,9 +22,12 @@ class Lastfm:
 
     def __init__(self, name=None, spotify=None, callback=None):
         if name is not None:
+            self.logger = logging.getLogger('test')
+            self.logger.info('started')
             self.name = name
             self.spotify = spotify
             self.get_history(callback)
+            
             
     def get_genres(self, artists, callback):
         urls = []
@@ -37,7 +42,7 @@ class Lastfm:
             callback(genres)
         async_batch_requests(urls, self.handle_response, req_callback, 200, genres=genres, url_map=url_map)
         
-    def handle_response(response, genres, url_map):
+    def handle_response(self, response, genres, url_map):
         artist = url_map[response.effective_url]
         if response.error:
             print("Error:", response.error, response.effective_url)
@@ -115,7 +120,7 @@ class Lastfm:
             return False
         arr_check = np.vectorize(check)
         self.history_df = self.history_df[ arr_check(self.history_df[ 'track_name' ]) ]
-        callback(self.history_df)
+        callback(self)
 
     def occurences_in_history(self, track_name, track_artists, timeslice=None):
         count = 0

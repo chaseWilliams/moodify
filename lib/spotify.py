@@ -11,6 +11,7 @@ import re
 from lib.lastfm import Lastfm
 import pusher
 import logging
+import pickle
 logging.basicConfig(filename="debug.log", level=logging.INFO)
 
 """ User is a class that effectively abstracts the HTTP requests to the Spotify API
@@ -41,7 +42,7 @@ class User:
     api_track_metadata = api_base + '/audio-features' # note -> max of 100 ids
     api_me = api_base + '/me'
 
-    def __init__(self, redis=None, token=None, lastfm_name='dude0faw3'):
+    def __init__(self, redis=None, token=None, lastfm_name='dude0faw3', uid=None):
         if redis is None:
             redis = rd.StrictRedis(host='localhost', port=6379, db=0)
         if token is not None:
@@ -68,11 +69,13 @@ class User:
                 self._optional_metadata,
                 self._update_pusher
             ]
+            self.callback_stack_length = len(self.library_callback_stack)
             self.build_library_messages = [
                 'Downloading your library and basic metadata',
                 'Connecting your library with additional Last.fm data',
                 'Assigning genres to your songs',
-                'Fetching final metadata points to create your user'
+                'Fetching final metadata points to create your user',
+                'Finished!'
             ]
             self.progress = 0
             self.logger = logging.getLogger('logger')
@@ -132,7 +135,7 @@ class User:
     def _handle_lastfm(self):
         self.logger.info('lastfm')
         if self.lastfm_name != '':
-            self.lastfm = Lastfm(name=self.lastfm_name, spotify=self.library, callback=self._get_count)
+            Lastfm(name=self.lastfm_name, spotify=self.library, callback=self._get_count)
         else:
             self.lastfm = Lastfm()
             arr = [np.nan] * len(self.library)
@@ -141,7 +144,8 @@ class User:
 
     # callback from initializing lastfm obj in handle_lastfm 
     # finishes the job of lastfm-related history metadata
-    def _get_count(self):
+    def _get_count(self, lastfm):
+        self.lastfm = lastfm
         self.library['count'] = self.lastfm.get_count(self.library)
         self._build_library()
 
@@ -217,40 +221,43 @@ class User:
     def _assign_genres(self):
         self.logger.info('genres')
         def callback(artist_genres):
+            def map_genres(track_artists):
+                artists = track_artists.split(',')
+                track_genres = []
+                for artist in artists:
+                    # may not find the artist, that's ok
+                    try:
+                        track_genres.extend(artist_genres[artist])
+                    except KeyError:
+                        pass
+                string = ''
+                for genre in track_genres:
+                    if genre is not None:
+                        string += genre
+                    string += ','
+        
+                return string.rstrip(',')
             find_all_genres = np.vectorize(map_genres)
             genres = find_all_genres(self.library['artists'])
             self.library['genres'] = pd.Series(genres)
    
-        artist_genres = self.lastfm.get_genres(self.artists, callback)
+        self.lastfm.get_genres(self.artists, callback)
         self._build_library()
 
-    def map_genres(track_artists):
-        artists = track_artists.split(',')
-        track_genres = []
-        for artist in artists:
-            # may not find the artist, that's ok
-            try:
-                track_genres.extend(artist_genres[artist])
-            except KeyError:
-                pass
-        string = ''
-        for genre in track_genres:
-            if genre is not None:
-                string += genre
-            string += ','
 
-        return string.rstrip(',')
 
     def _update_pusher(self):
-        step_size = 1 / len(self.library_callback_stack)
+        step_size = 1 / self.callback_stack_length * 100
         self.progress += 1
-        if self.progress is len(self.library_callback_stack):
+        if self.progress is self.callback_stack_length + 1:
             data = {
                 'progress': 100,
                 'message': 'All done!'
             }
+            
         else:
             progress = self.progress * step_size
+            self.logger.info(self.progress)
             message = self.build_library_messages[self.progress - 1]
             data = {
                 'progress': progress,

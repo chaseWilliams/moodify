@@ -154,7 +154,5 @@ def add_header(r):
 if __name__ == "__main__":
     app.run(
         host = ip,
-        port = port,
-        debug=True,
-        use_reloader=True
+        port = int(port)
     )
